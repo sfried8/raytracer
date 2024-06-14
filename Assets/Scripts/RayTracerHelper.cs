@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Rendering;
 using static UnityEngine.Mathf;
 
 [ExecuteAlways, ImageEffectAllowedInSceneView]
@@ -192,36 +194,37 @@ public class RayTracerHelper : MonoBehaviour
 				continue;
 			}
 			Mesh mesh = mo.GetComponent<MeshFilter>().sharedMesh;
-			MeshRenderer meshRenderer = mo.GetComponent<MeshRenderer>();
-
-			Vector3 origin = mo.transform.position;
-			Bounds meshBounds = new Bounds(origin, Vector3.zero);
-			MeshInfo meshInfo = new MeshInfo()
+			for (int subMeshIndex = 0; subMeshIndex < mesh.subMeshCount; subMeshIndex++)
 			{
-				numTriangles = mesh.triangles.Length / 3,
-				triangleStartIndex = allTriangles.Count,
-				material = mo.material,
-			};
-			for (int triangleVertex = 0; triangleVertex < mesh.triangles.Length / 3; triangleVertex += 1)
-			{
-				Vector3 a = matchTransform(mesh.vertices[mesh.triangles[3 * triangleVertex + 0]], mo.transform);
-				Vector3 b = matchTransform(mesh.vertices[mesh.triangles[3 * triangleVertex + 1]], mo.transform);
-				Vector3 c = matchTransform(mesh.vertices[mesh.triangles[3 * triangleVertex + 2]], mo.transform);
-				meshBounds.Encapsulate(a);
-				meshBounds.Encapsulate(b);
-				meshBounds.Encapsulate(c);
-				Triangle triangle = new Triangle()
+				SubMeshDescriptor subMeshDescriptor = mesh.GetSubMesh(subMeshIndex);
+				MeshInfo meshInfo = new MeshInfo()
 				{
-					Q = a,
-					u = b - a,
-					v = c - a,
+					numTriangles = subMeshDescriptor.indexCount / 3,
+					triangleStartIndex = allTriangles.Count,
+					material = mo.materials[subMeshIndex],
 				};
+				Bounds meshBounds = new Bounds(matchTransform(mesh.vertices[mesh.triangles[subMeshDescriptor.indexStart]], mo.transform), Vector3.one * 0.1f);
+				for (int triangleVertex = 0; triangleVertex < meshInfo.numTriangles; triangleVertex += 1)
+				{
+					Vector3 a = matchTransform(mesh.vertices[mesh.triangles[subMeshDescriptor.indexStart + 3 * triangleVertex + 0]], mo.transform);
+					Vector3 b = matchTransform(mesh.vertices[mesh.triangles[subMeshDescriptor.indexStart + 3 * triangleVertex + 1]], mo.transform);
+					Vector3 c = matchTransform(mesh.vertices[mesh.triangles[subMeshDescriptor.indexStart + 3 * triangleVertex + 2]], mo.transform);
+					meshBounds.Encapsulate(a);
+					meshBounds.Encapsulate(b);
+					meshBounds.Encapsulate(c);
+					Triangle triangle = new Triangle()
+					{
+						Q = a,
+						u = b - a,
+						v = c - a,
+					};
 
-				allTriangles.Add(triangle);
+					allTriangles.Add(triangle);
+				}
+				meshInfo.boundsMin = meshBounds.min;
+				meshInfo.boundsMax = meshBounds.max;
+				allMeshInfo.Add(meshInfo);
 			}
-			meshInfo.boundsMin = meshBounds.min;
-			meshInfo.boundsMax = meshBounds.max;
-			allMeshInfo.Add(meshInfo);
 			// MeshChunk[] chunks = mo.GetSubMeshes();
 			// foreach (MeshChunk chunk in chunks)
 			// {
@@ -273,6 +276,7 @@ public class RayTracerHelper : MonoBehaviour
 		// ShaderHelper.CreateStructuredBuffer(ref sphereBuffer, spheres);
 		// rayTracingMaterial.SetBuffer("Spheres", sphereBuffer);
 		// rayTracingMaterial.SetInt("NumSpheres", numSpheres);
+		numMeshChunks = allMeshInfo.Count;
 		rayTracingMaterial.SetBuffer("Meshes", meshInfoBuffer);
 		rayTracingMaterial.SetInt("NumMeshes", allMeshInfo.Count);
 	}
@@ -296,7 +300,7 @@ public class RayTracerHelper : MonoBehaviour
 		if (showBoundingCorners)
 		{
 
-
+			float boundingCornerRadius = 0.1f;
 			for (int i = 0; i < allMeshInfo.Count; i++)
 			{
 				Vector3 mi = allMeshInfo[i].boundsMin;
@@ -304,50 +308,50 @@ public class RayTracerHelper : MonoBehaviour
 				spheres[8 * i + sphereObjects.Length] = new Sphere()
 				{
 					origin = mi,
-					radius = 2.05f,
-					material = spheres[0].material
+					radius = boundingCornerRadius,
+					material = allMeshInfo[i].material
 				};
 				spheres[8 * i + sphereObjects.Length + 1] = new Sphere()
 				{
 					origin = new Vector3(mi.x, mi.y, ma.z),
-					radius = 2.05f,
-					material = spheres[0].material
+					radius = boundingCornerRadius,
+					material = allMeshInfo[i].material
 				};
 				spheres[8 * i + sphereObjects.Length + 2] = new Sphere()
 				{
 					origin = new Vector3(mi.x, ma.y, mi.z),
-					radius = 2.05f,
-					material = spheres[0].material
+					radius = boundingCornerRadius,
+					material = allMeshInfo[i].material
 				};
 				spheres[8 * i + sphereObjects.Length + 3] = new Sphere()
 				{
 					origin = new Vector3(ma.x, mi.y, mi.z),
-					radius = 2.05f,
-					material = spheres[0].material
+					radius = boundingCornerRadius,
+					material = allMeshInfo[i].material
 				};
 				spheres[8 * i + sphereObjects.Length + 4] = new Sphere()
 				{
 					origin = new Vector3(mi.x, ma.y, ma.z),
-					radius = 2.05f,
-					material = spheres[0].material
+					radius = boundingCornerRadius,
+					material = allMeshInfo[i].material
 				};
 				spheres[8 * i + sphereObjects.Length + 5] = new Sphere()
 				{
 					origin = new Vector3(ma.x, mi.y, ma.z),
-					radius = 2.05f,
-					material = spheres[0].material
+					radius = boundingCornerRadius,
+					material = allMeshInfo[i].material
 				};
 				spheres[8 * i + sphereObjects.Length + 6] = new Sphere()
 				{
 					origin = new Vector3(ma.x, ma.y, mi.z),
-					radius = 2.05f,
-					material = spheres[0].material
+					radius = boundingCornerRadius,
+					material = allMeshInfo[i].material
 				};
 				spheres[8 * i + sphereObjects.Length + 7] = new Sphere()
 				{
 					origin = ma,
-					radius = 2.05f,
-					material = spheres[0].material
+					radius = boundingCornerRadius,
+					material = allMeshInfo[i].material
 				};
 			}
 		}

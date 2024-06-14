@@ -51,6 +51,6 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "Raytracer.sln",
+    "dotnet.defaultSolution": "raytracer.sln",
     "editor.defaultFormatter": "litefeel.shaderlabformatter"
 }

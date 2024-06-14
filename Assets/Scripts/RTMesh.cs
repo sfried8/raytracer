@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class RTMesh : MonoBehaviour
 {
-    public RTMaterial material;
+    public RTMaterial[] materials;
 
     [SerializeField, HideInInspector] int materialObjectID;
     [SerializeField, HideInInspector] bool materialInitFlag;
@@ -43,7 +43,8 @@ public class RTMesh : MonoBehaviour
         if (!materialInitFlag)
         {
             materialInitFlag = true;
-            material.SetDefaultValues();
+            materials[0] = new RTMaterial();
+            materials[0].SetDefaultValues();
         }
 
         MeshRenderer renderer = GetComponent<MeshRenderer>();
@@ -55,10 +56,16 @@ public class RTMesh : MonoBehaviour
         {
             if (materialObjectID != gameObject.GetInstanceID())
             {
-                renderer.sharedMaterial = new Material(renderer.sharedMaterial);
+                Material[] materials = new Material[renderer.sharedMaterials.Length];
+                for (int i = 0; i < renderer.sharedMaterials.Length; i++)
+                {
+                    materials[i] = new Material(renderer.sharedMaterials[i]);
+                }
+                renderer.sharedMaterials = materials;
+
                 materialObjectID = gameObject.GetInstanceID();
             }
-            renderer.sharedMaterial.color = material.color;
+            // renderer.sharedMaterial.color = material.color;
         }
     }
 }

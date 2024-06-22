@@ -43,6 +43,7 @@ public class RTMesh : MonoBehaviour
         if (!materialInitFlag)
         {
             materialInitFlag = true;
+            materials = new RTMaterial[1];
             materials[0] = new RTMaterial();
             materials[0].SetDefaultValues();
         }
@@ -57,6 +58,7 @@ public class RTMesh : MonoBehaviour
             if (materialObjectID != gameObject.GetInstanceID())
             {
                 Material[] materials = new Material[renderer.sharedMaterials.Length];
+                Debug.Log(renderer.name + ": " + renderer.sharedMaterials.Length);
                 for (int i = 0; i < renderer.sharedMaterials.Length; i++)
                 {
                     materials[i] = new Material(renderer.sharedMaterials[i]);

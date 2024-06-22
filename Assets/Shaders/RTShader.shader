@@ -33,6 +33,12 @@ Shader "Custom/RTShader"
             /////////////////
             // STRUCTS
             /////////////////
+            const int CheckerPattern = 1;
+
+
+            /////////////////
+            // STRUCTS
+            /////////////////
 
             struct Ray {
                 float3 origin;
@@ -47,6 +53,9 @@ Shader "Custom/RTShader"
                 float smoothness;
                 float specularProbability;
                 int flag;
+                float4 checkerColor2;
+                float checkerScale;
+                float invCheckerScale;
             };
 
             struct Sphere {
@@ -55,7 +64,7 @@ Shader "Custom/RTShader"
                 RTMaterial material;
             };
 
-            struct hit_info {
+            struct HitInfo {
                 bool did_hit;
                 float3 hit_point;
                 float dist;
@@ -149,8 +158,8 @@ Shader "Custom/RTShader"
             /////////////////
             // HIT LOGIC
             /////////////////
-            hit_info hit_sphere(float3 sphereOrigin, float sphereRadius, Ray r) {
-                hit_info hit = (hit_info)0;
+            HitInfo hit_sphere(float3 sphereOrigin, float sphereRadius, Ray r) {
+                HitInfo hit = (HitInfo)0;
                 float3 oc = sphereOrigin - r.origin;
                 float a = dot(r.direction, r.direction);
                 float b = -2.0 * dot(r.direction, oc);
@@ -170,14 +179,14 @@ Shader "Custom/RTShader"
                 }
                 return hit;
             }
-            hit_info hit_triangle(Triangle tri, Ray r) {
-                hit_info hit = (hit_info)0;
+            HitInfo hit_triangle(Triangle tri, Ray r) {
+                HitInfo hit = (HitInfo)0;
                 tri.n = cross(tri.u, tri.v);
                 tri.normal = normalize(tri.n);
                 tri.D = dot(tri.normal, tri.Q);
                 tri.w = tri.n / dot(tri.n, tri.n);
                 float denom = dot(tri.normal, r.direction);
-                if (abs(denom) < 0.00001) {
+                if (denom > -0.00001) {
                     return hit;
                 }
                 float t = (tri.D - dot(tri.normal, r.origin))/denom;
@@ -229,15 +238,15 @@ Shader "Custom/RTShader"
                 return true;
             }
 
-            hit_info hit_mesh(MeshInfo mesh, Ray r) {
-                hit_info closestHit = (hit_info)0;
+            HitInfo hit_mesh(MeshInfo mesh, Ray r) {
+                HitInfo closestHit = (HitInfo)0;
                 closestHit.dist = 1.#INF;
                 closestHit.material = mesh.material;
                 if (!hit_aabb(mesh.boundsMin, mesh.boundsMax, r)) {
                     // closestHit.err = true;
                     return closestHit;
                 }
-                hit_info hit = (hit_info)0;
+                HitInfo hit = (HitInfo)0;
                 for (int i = 0; i < mesh.numTriangles; i++) {
                     Triangle tri = Triangles[mesh.triangleStartIndex + i];
                     hit = hit_triangle(tri, r);
@@ -249,9 +258,20 @@ Shader "Custom/RTShader"
                 }
                 return closestHit;
             }
+            float4 get_material_color(HitInfo hit) {
+                if (hit.material.flag | CheckerPattern) {
+                    int x = (int)floor(hit.hit_point.x * hit.material.invCheckerScale);
+                    int y = (int)floor(hit.hit_point.y * hit.material.invCheckerScale);
+                    int z = (int)floor(hit.hit_point.z * hit.material.invCheckerScale);
+                    if ((x + y + z) % 2 == 0) {
+                        return hit.material.checkerColor2;
+                    }
+                }
+                return hit.material.color;
 
+            }
             float4 ray_color(Ray r, inout uint rng) {
-                hit_info closestHit;
+                HitInfo closestHit;
                 float3 currentRayColor = float3(1,1,1);
                 float3 light = float3(0,0,0);
                 for(int bounce = 0; bounce < MaxBounces; bounce++) {
@@ -260,7 +280,7 @@ Shader "Custom/RTShader"
                     closestHit.did_hit = false;
                     for (int i = 0; i < NumSpheres; i++){
                         Sphere s = Spheres[i];
-                        hit_info hit = hit_sphere(s.origin, s.radius, r);
+                        HitInfo hit = hit_sphere(s.origin, s.radius, r);
                         if (hit.did_hit) {
                             if (hit.dist < closestHit.dist) {
                                 closestHit = hit;
@@ -270,7 +290,7 @@ Shader "Custom/RTShader"
                     }
                     for (int i = 0; i < NumMeshes; i++){
                         MeshInfo mesh = Meshes[i];
-                        hit_info hit = hit_mesh(mesh, r);
+                        HitInfo hit = hit_mesh(mesh, r);
                         if (hit.err) {
                             return float4(1,0,0,1);
                         }
@@ -286,7 +306,7 @@ Shader "Custom/RTShader"
                         break;
                     }
                     bool isSpecular = RandomValue(rng) <= closestHit.material.specularProbability;
-                    currentRayColor *= isSpecular ? closestHit.material.specularColor : closestHit.material.color;
+                    currentRayColor *= isSpecular ? closestHit.material.specularColor : get_material_color(closestHit);
                     light += currentRayColor * closestHit.material.emissionColor * closestHit.material.emissionStrength;
                     float3 specularDir = reflect(r.direction, closestHit.normal);
                     r = (Ray)0;

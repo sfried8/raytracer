@@ -32,6 +32,13 @@ public class RayTracerHelper : MonoBehaviour
 	[SerializeField] int numMeshChunks;
 	[SerializeField] int numTriangles;
 	[SerializeField] int numSpheres;
+	public enum AccumulateSetting
+	{
+		WhileStatic,
+		Always,
+		Never
+	}
+	public AccumulateSetting accumulateSetting;
 	public bool shouldAccumulate;
 	public bool showBoundingCorners;
 	// Materials and render textures
@@ -84,7 +91,7 @@ public class RayTracerHelper : MonoBehaviour
 			// Run the ray tracing shader and draw the result to a temp texture
 			rayTracingMaterial.SetInt("Frame", numRenderedFrames);
 			RenderTexture currentFrame = RenderTexture.GetTemporary(src.width, src.height, 0, ShaderHelper.RGBA_SFloat);
-			if (shouldAccumulate)
+			if (accumulateSetting == AccumulateSetting.Always || (shouldAccumulate && accumulateSetting == AccumulateSetting.WhileStatic))
 			{
 				// Create copy of prev frame
 				Graphics.Blit(resultTexture, prevFrameCopy);
@@ -223,6 +230,7 @@ public class RayTracerHelper : MonoBehaviour
 				}
 				meshInfo.boundsMin = meshBounds.min;
 				meshInfo.boundsMax = meshBounds.max;
+				meshInfo.material.SetInverseCheckerScale();
 				allMeshInfo.Add(meshInfo);
 			}
 			// MeshChunk[] chunks = mo.GetSubMeshes();
@@ -296,6 +304,8 @@ public class RayTracerHelper : MonoBehaviour
 				radius = sphereObjects[i].transform.localScale.x * 0.5f,
 				material = sphereObjects[i].material
 			};
+			spheres[i].material.SetInverseCheckerScale();
+
 		}
 		if (showBoundingCorners)
 		{

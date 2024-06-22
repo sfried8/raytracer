@@ -302,7 +302,7 @@ public class RayTracerHelper : MonoBehaviour
 			{
 				origin = sphereObjects[i].transform.position,
 				radius = sphereObjects[i].transform.localScale.x * 0.5f,
-				material = sphereObjects[i].material
+				material = sphereObjects[i].material,
 			};
 			spheres[i].material.SetInverseCheckerScale();
 

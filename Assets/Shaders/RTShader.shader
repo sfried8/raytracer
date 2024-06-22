@@ -52,6 +52,7 @@ Shader "Custom/RTShader"
                 float emissionStrength;
                 float smoothness;
                 float specularProbability;
+                float refractive_index;
                 int flag;
                 float4 checkerColor2;
                 float checkerScale;
@@ -71,6 +72,7 @@ Shader "Custom/RTShader"
                 float3 normal;
                 RTMaterial material;
                 bool err;
+                bool front_face;
             };
 
             struct Triangle
@@ -175,6 +177,12 @@ Shader "Custom/RTShader"
                         hit.did_hit = true;
                         hit.hit_point = at(r, hit.dist);
                         hit.normal = normalize(hit.hit_point - sphereOrigin);
+                        if (dot(r.direction, hit.normal) > 0.0) {
+                            hit.normal = -hit.normal;
+                            hit.front_face = false;
+                            } else {
+                            hit.front_face = true;
+                        }
                     }
                 }
                 return hit;
@@ -270,6 +278,15 @@ Shader "Custom/RTShader"
                 return hit.material.color;
 
             }
+
+            float3 refract(float3 ray_direction, float3 surface_normal, float refractive_index_ratio) {
+                float cos_theta = min(dot(-ray_direction, surface_normal), 1.0);
+                float3 perp = refractive_index_ratio * (ray_direction + cos_theta * surface_normal);
+                float len = length(perp);
+                float3 para = -sqrt(abs(1.0 - len*len)) * surface_normal;
+                return perp + para;
+            }
+
             float4 ray_color(Ray r, inout uint rng) {
                 HitInfo closestHit;
                 float3 currentRayColor = float3(1,1,1);
@@ -305,17 +322,27 @@ Shader "Custom/RTShader"
                         light += currentRayColor * float3(0,0.14,0.74);
                         break;
                     }
+
+
                     bool isSpecular = RandomValue(rng) <= closestHit.material.specularProbability;
                     currentRayColor *= isSpecular ? closestHit.material.specularColor : get_material_color(closestHit);
                     light += currentRayColor * closestHit.material.emissionColor * closestHit.material.emissionStrength;
                     float3 specularDir = reflect(r.direction, closestHit.normal);
+
+                    float3 scatterDir;
+                    if (closestHit.material.refractive_index >= 1.0) {
+                        float rir = closestHit.front_face ? (1.0/closestHit.material.refractive_index) : closestHit.material.refractive_index;
+                        scatterDir = refract(r.direction, closestHit.normal, rir);
+                        } else {
+                        scatterDir = closestHit.normal + RandomPointInSphere(rng);
+                        if(dot(closestHit.normal, scatterDir) < 0.0) {
+                            scatterDir = -scatterDir;
+                        }
+                    }
                     r = (Ray)0;
                     r.origin = closestHit.hit_point;
-                    float3 scatterDir = closestHit.normal + RandomPointInSphere(rng);
-                    if(dot(closestHit.normal, scatterDir) < 0.0) {
-                        scatterDir = -scatterDir;
-                    }
                     r.direction = normalize(lerp(scatterDir, specularDir, isSpecular ? closestHit.material.smoothness : 0));
+                    
                 }
                 return float4(light, 1);
                 

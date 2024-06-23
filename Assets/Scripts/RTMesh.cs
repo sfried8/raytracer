@@ -61,7 +61,11 @@ public class RTMesh : MonoBehaviour
                 Debug.Log(renderer.name + ": " + renderer.sharedMaterials.Length);
                 for (int i = 0; i < renderer.sharedMaterials.Length; i++)
                 {
-                    materials[i] = new Material(renderer.sharedMaterials[i]);
+                    if (renderer.sharedMaterials[i] != null)
+                    {
+                        materials[i] = new Material(renderer.sharedMaterials[i]);
+
+                    }
                 }
                 renderer.sharedMaterials = materials;
 

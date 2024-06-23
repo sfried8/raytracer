@@ -29,3 +29,9 @@ public struct MeshInfo
     public Vector3 boundsMax;
     public RTMaterial material;
 }
+
+public struct MeshChunk
+{
+    public List<Triangle> triangles;
+    public Bounds bounds;
+}

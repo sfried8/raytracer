@@ -126,8 +126,12 @@ MonoBehaviour:
     emissionStrength: 0
     smoothness: 0
     specularProbability: 0
+    refractive_index: 0
     flag: 0
-  materialObjectID: -73922
+    checkerColor2: {r: 0, g: 0, b: 0, a: 0}
+    checkerScale: 0
+    invCheckerScale: 0
+  materialObjectID: -299356
   materialInitFlag: 1
   boundsMin: {x: 0, y: 0, z: 0}
   boundsMax: {x: 0, y: 0, z: 0}
@@ -260,8 +264,12 @@ MonoBehaviour:
     emissionStrength: 0
     smoothness: 0
     specularProbability: 0
+    refractive_index: 0
     flag: 0
-  materialObjectID: -65668
+    checkerColor2: {r: 0, g: 0, b: 0, a: 0}
+    checkerScale: 0
+    invCheckerScale: 0
+  materialObjectID: -299332
   materialInitFlag: 1
   boundsMin: {x: 0, y: 0, z: 0}
   boundsMax: {x: 0, y: 0, z: 0}
@@ -431,8 +439,12 @@ MonoBehaviour:
     emissionStrength: 0.93
     smoothness: 0
     specularProbability: 1
+    refractive_index: 0
     flag: 0
-  materialObjectID: -77540
+    checkerColor2: {r: 0, g: 0, b: 0, a: 0}
+    checkerScale: 0
+    invCheckerScale: 0
+  materialObjectID: -299404
   materialInitFlag: 1
   boundsMin: {x: 0, y: 0, z: 0}
   boundsMax: {x: 0, y: 0, z: 0}
@@ -565,8 +577,12 @@ MonoBehaviour:
     emissionStrength: 0
     smoothness: 0
     specularProbability: 0
+    refractive_index: 0
     flag: 0
-  materialObjectID: -75090
+    checkerColor2: {r: 0, g: 0, b: 0, a: 0}
+    checkerScale: 0
+    invCheckerScale: 0
+  materialObjectID: -299368
   materialInitFlag: 1
   boundsMin: {x: 0, y: 0, z: 0}
   boundsMax: {x: 0, y: 0, z: 0}
@@ -699,8 +715,12 @@ MonoBehaviour:
     emissionStrength: 0
     smoothness: 1
     specularProbability: 0.073
+    refractive_index: 0
     flag: 0
-  materialObjectID: -75876
+    checkerColor2: {r: 0, g: 0, b: 0, a: 0}
+    checkerScale: 0
+    invCheckerScale: 0
+  materialObjectID: -299380
   materialInitFlag: 1
   boundsMin: {x: 0, y: 0, z: 0}
   boundsMax: {x: 0, y: 0, z: 0}
@@ -833,8 +853,12 @@ MonoBehaviour:
     emissionStrength: 0
     smoothness: 0
     specularProbability: 0
+    refractive_index: 0
     flag: 0
-  materialObjectID: -76750
+    checkerColor2: {r: 0, g: 0, b: 0, a: 0}
+    checkerScale: 0
+    invCheckerScale: 0
+  materialObjectID: -299392
   materialInitFlag: 1
   boundsMin: {x: 0, y: 0, z: 0}
   boundsMax: {x: 0, y: 0, z: 0}
@@ -967,8 +991,12 @@ MonoBehaviour:
     emissionStrength: 0
     smoothness: 0
     specularProbability: 0
+    refractive_index: 0
     flag: 0
-  materialObjectID: -71380
+    checkerColor2: {r: 0, g: 0, b: 0, a: 0}
+    checkerScale: 0
+    invCheckerScale: 0
+  materialObjectID: -299344
   materialInitFlag: 1
   boundsMin: {x: 0, y: 0, z: 0}
   boundsMax: {x: 0, y: 0, z: 0}

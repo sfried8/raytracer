@@ -224,33 +224,14 @@ Shader "Custom/RTShader"
             }
             bool hit_aabb(float3 boundsMin, float3 boundsMax, Ray r) {
                 // r.dir is unit direction vector of ray
-                float dirfracx = 1.0f / r.direction.x;
-                float dirfracy = 1.0f / r.direction.y;
-                float dirfracz = 1.0f / r.direction.z;
-                // lb is the corner of AABB with minimal coordinates - left bottom, rt is maximal corner
-                // r.org is origin of ray
-                float t1 = (boundsMin.x - r.origin.x)*dirfracx;
-                float t2 = (boundsMax.x - r.origin.x)*dirfracx;
-                float t3 = (boundsMin.y - r.origin.y)*dirfracy;
-                float t4 = (boundsMax.y - r.origin.y)*dirfracy;
-                float t5 = (boundsMin.z - r.origin.z)*dirfracz;
-                float t6 = (boundsMax.z - r.origin.z)*dirfracz;
-
-                float tmin = max(max(min(t1, t2), min(t3, t4)), min(t5, t6));
-                float tmax = min(min(max(t1, t2), max(t3, t4)), max(t5, t6));
-
-                // if tmax < 0, ray (line) is intersecting AABB, but the whole AABB is behind us
-                if (tmax < 0)
-                {
-                    return false;
-                }
-
-                // if tmin > tmax, ray doesn't intersect AABB
-                if (tmin > tmax)
-                {
-                    return false;
-                }
-                return true;
+                float3 invDir = 1 / r.direction;
+                float3 tMin = (boundsMin - r.origin) * invDir;
+                float3 tMax = (boundsMax - r.origin) * invDir;
+                float3 t1 = min(tMin, tMax);
+                float3 t2 = max(tMin, tMax);
+                float tNear = max(max(t1.x, t1.y), t1.z);
+                float tFar = min(min(t2.x, t2.y), t2.z);
+                return tNear <= tFar;
             }
 
             HitInfo hit_mesh(MeshInfo mesh, Ray r) {

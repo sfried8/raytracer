@@ -23,6 +23,8 @@ public class RayTracerHelper : MonoBehaviour
 
 	[Header("View Settings")]
 	[SerializeField] bool useShaderInSceneView;
+	[Header("Debug")]
+	[SerializeField] bool displaySurfaceNormals;
 	[Header("References")]
 	[SerializeField] Shader rayTracingShader;
 	[SerializeField] Shader accumulateShader;
@@ -54,16 +56,48 @@ public class RayTracerHelper : MonoBehaviour
 	List<Triangle> allTriangles;
 
 
+	bool clearAccumulate = false;
+
 	bool initialized = false;
 	private bool shouldSaveScreenshot = false;
 	List<MeshInfo> allMeshInfo;
+	string snapshotDirectory;
+	int snapshotFrame;
+	public RTAnimation rtAnimation;
 
 	void Start()
 	{
 		numRenderedFrames = 0;
 		shouldAccumulate = true;
+		snapshotDirectory = "C://Users/Sam/Documents/bananas/" + DateTime.UtcNow.ToFileTimeUtc();
+		snapshotFrame = 0;
 	}
 
+	void TakeSnapshot()
+	{
+		if (!System.IO.Directory.Exists(snapshotDirectory))
+		{
+			System.IO.Directory.CreateDirectory(snapshotDirectory);
+		}
+		shouldSaveScreenshot = false;
+		Texture2D renderedTexture = new Texture2D(Screen.width, Screen.height);
+		renderedTexture.ReadPixels(new Rect(0, 0, Screen.width, Screen.height), 0, 0);
+		RenderTexture.active = null;
+		byte[] byteArray = renderedTexture.EncodeToPNG();
+		System.IO.File.WriteAllBytes(snapshotDirectory + "/" + (++snapshotFrame).ToString("D4") + ".png", byteArray);
+	}
+	bool ShouldTakeScreenshot()
+	{
+		if (shouldSaveScreenshot)
+		{
+			return true;
+		}
+		if (rtAnimation != null && rtAnimation.OnFrameComplete())
+		{
+			return true;
+		}
+		return false;
+	}
 	// Called after any camera (e.g. game or scene camera) has finished rendering into the src texture
 	void OnRenderImage(RenderTexture src, RenderTexture target)
 	{
@@ -91,7 +125,7 @@ public class RayTracerHelper : MonoBehaviour
 			// Run the ray tracing shader and draw the result to a temp texture
 			rayTracingMaterial.SetInt("Frame", numRenderedFrames);
 			RenderTexture currentFrame = RenderTexture.GetTemporary(src.width, src.height, 0, ShaderHelper.RGBA_SFloat);
-			if (accumulateSetting == AccumulateSetting.Always || (shouldAccumulate && accumulateSetting == AccumulateSetting.WhileStatic))
+			if (!clearAccumulate && (accumulateSetting == AccumulateSetting.Always || (shouldAccumulate && accumulateSetting == AccumulateSetting.WhileStatic)))
 			{
 				// Create copy of prev frame
 				Graphics.Blit(resultTexture, prevFrameCopy);
@@ -104,6 +138,7 @@ public class RayTracerHelper : MonoBehaviour
 			}
 			else
 			{
+				clearAccumulate = false;
 				numRenderedFrames = 0;
 				Graphics.Blit(null, resultTexture, rayTracingMaterial);
 			}
@@ -111,14 +146,14 @@ public class RayTracerHelper : MonoBehaviour
 			// Draw result to screen
 			Graphics.Blit(resultTexture, target);
 
-			if (numRenderedFrames == 1500 || shouldSaveScreenshot)
+			if (ShouldTakeScreenshot())
 			{
-				shouldSaveScreenshot = false;
-				Texture2D renderedTexture = new Texture2D(Screen.width, Screen.height);
-				renderedTexture.ReadPixels(new Rect(0, 0, Screen.width, Screen.height), 0, 0);
-				RenderTexture.active = null;
-				byte[] byteArray = renderedTexture.EncodeToPNG();
-				System.IO.File.WriteAllBytes(Application.dataPath + "/cameracapture" + DateTime.UtcNow.ToFileTimeUtc() + ".png", byteArray);
+				TakeSnapshot();
+				if (rtAnimation != null)
+				{
+					rtAnimation.NextStep();
+					clearAccumulate = true;
+				}
 			}
 
 			// Release temps
@@ -141,7 +176,6 @@ public class RayTracerHelper : MonoBehaviour
 			return;
 		}
 		initialized = isGameCam;
-		Debug.Log("initializing");
 		// Create materials used in blits
 		ShaderHelper.InitMaterial(rayTracingShader, ref rayTracingMaterial);
 		ShaderHelper.InitMaterial(accumulateShader, ref accumulateMaterial);
@@ -162,6 +196,7 @@ public class RayTracerHelper : MonoBehaviour
 		rayTracingMaterial.SetInt("RaysPerPixel", isGameCam ? numRaysPerPixel : Min(numRaysPerPixel, 2));
 		rayTracingMaterial.SetFloat("DefocusStrength", defocusStrength);
 		rayTracingMaterial.SetFloat("DivergeStrength", divergeStrength);
+		rayTracingMaterial.SetInt("DisplayNormals", displaySurfaceNormals ? 1 : 0);
 
 		// rayTracingMaterial.SetInteger("EnvironmentEnabled", environmentSettings.enabled ? 1 : 0);
 		// rayTracingMaterial.SetColor("GroundColour", environmentSettings.groundColour);

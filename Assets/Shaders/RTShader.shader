@@ -109,6 +109,7 @@ Shader "Custom/RTShader"
             int NumMeshes;
             int MaxBounces;
             int RaysPerPixel;
+            bool DisplayNormals;
 
             /////////////////
             // RNG
@@ -198,7 +199,7 @@ Shader "Custom/RTShader"
                     return hit;
                 }
                 float t = (tri.D - dot(tri.normal, r.origin))/denom;
-                if (t < 0.001) 
+                if (t < 0.001)
                 {
                     hit.did_hit = false;
                     } else {
@@ -211,6 +212,12 @@ Shader "Custom/RTShader"
                         hit.dist = t;
                         hit.hit_point = intersection;
                         hit.normal = tri.normal;
+                        if (denom > 0.0) {
+                            hit.normal = -hit.normal;
+                            hit.front_face = false;
+                            } else {
+                            hit.front_face = true;
+                        }
                     }
                 }
                 return hit;
@@ -281,6 +288,10 @@ Shader "Custom/RTShader"
 
             float3 refract(float3 ray_direction, float3 surface_normal, float refractive_index_ratio) {
                 float cos_theta = min(dot(-ray_direction, surface_normal), 1.0);
+                float sin_theta = sqrt(1.0 - cos_theta*cos_theta);
+                if (refractive_index_ratio * sin_theta > 1.0) {
+                    return reflect(ray_direction, surface_normal);
+                }
                 float3 perp = refractive_index_ratio * (ray_direction + cos_theta * surface_normal);
                 float len = length(perp);
                 float3 para = -sqrt(abs(1.0 - len*len)) * surface_normal;
@@ -288,6 +299,7 @@ Shader "Custom/RTShader"
             }
 
             float4 ray_color(Ray r, inout uint rng) {
+                float previousRefractiveIndex = 1.0;
                 HitInfo closestHit;
                 float3 currentRayColor = float3(1,1,1);
                 float3 light = float3(0,0,0);
@@ -323,7 +335,9 @@ Shader "Custom/RTShader"
                         break;
                     }
 
-
+                    if (DisplayNormals) {
+                        return float4(closestHit.normal, 1);
+                    }
                     bool isSpecular = RandomValue(rng) <= closestHit.material.specularProbability;
                     currentRayColor *= isSpecular ? closestHit.material.specularColor : get_material_color(closestHit);
                     light += currentRayColor * closestHit.material.emissionColor * closestHit.material.emissionStrength;
@@ -331,8 +345,9 @@ Shader "Custom/RTShader"
 
                     float3 scatterDir;
                     if (closestHit.material.refractive_index >= 1.0) {
-                        float rir = closestHit.front_face ? (1.0/closestHit.material.refractive_index) : closestHit.material.refractive_index;
+                        float rir = closestHit.front_face ? (previousRefractiveIndex/closestHit.material.refractive_index) : (closestHit.material.refractive_index/previousRefractiveIndex);
                         scatterDir = refract(r.direction, closestHit.normal, rir);
+                        previousRefractiveIndex = closestHit.material.refractive_index;
                         } else {
                         scatterDir = closestHit.normal + RandomPointInSphere(rng);
                         if(dot(closestHit.normal, scatterDir) < 0.0) {

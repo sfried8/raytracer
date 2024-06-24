@@ -35,3 +35,11 @@ public struct MeshChunk
     public List<Triangle> triangles;
     public Bounds bounds;
 }
+
+public struct MeshParent
+{
+    public int numMeshes;
+    public int meshStartIndex;
+    public Vector3 boundsMin;
+    public Vector3 boundsMax;
+}

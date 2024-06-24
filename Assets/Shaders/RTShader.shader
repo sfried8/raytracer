@@ -93,6 +93,13 @@ Shader "Custom/RTShader"
                 float3 boundsMax;
                 RTMaterial material;
             };
+            struct MeshParent
+            {
+                int numMeshes;
+                int meshStartIndex;
+                float3 boundsMin;
+                float3 boundsMax;
+            };
             /////////////////
             // VARIABLES
             /////////////////
@@ -103,10 +110,11 @@ Shader "Custom/RTShader"
             StructuredBuffer<Sphere> Spheres;
             StructuredBuffer<Triangle> Triangles;
             StructuredBuffer<MeshInfo> Meshes;
+            StructuredBuffer<MeshParent> MeshParents;
             int Frame;
             int NumSpheres;
             int NumTriangles;
-            int NumMeshes;
+            int NumMeshParents;
             int MaxBounces;
             int RaysPerPixel;
             bool DisplayNormals;
@@ -249,11 +257,34 @@ Shader "Custom/RTShader"
                     if (hit.did_hit) {
                         if (hit.dist < closestHit.dist) {
                             closestHit = hit;
+                            closestHit.material = mesh.material;
                         }
                     }
                 }
                 return closestHit;
             }
+
+            HitInfo hit_mesh_parent(MeshParent meshParent, Ray r) {
+                HitInfo closestHit = (HitInfo)0;
+                closestHit.dist = 1.#INF;
+                if (!hit_aabb(meshParent.boundsMin, meshParent.boundsMax, r)) {
+                    // closestHit.err = true;
+                    return closestHit;
+                }
+                HitInfo hit = (HitInfo)0;
+                for (int i = 0; i < meshParent.numMeshes; i++) {
+                    MeshInfo mesh = Meshes[meshParent.meshStartIndex + i];
+                    hit = hit_mesh(mesh, r);
+                    if (hit.did_hit) {
+                        if (hit.dist < closestHit.dist) {
+                            closestHit = hit;
+                        }
+                    }
+                }
+                return closestHit;
+                
+            }
+
             float4 get_material_color(HitInfo hit) {
                 if (hit.material.flag | CheckerPattern) {
                     int x = (int)floor(hit.hit_point.x * hit.material.invCheckerScale);
@@ -298,16 +329,15 @@ Shader "Custom/RTShader"
                             }
                         }
                     }
-                    for (int i = 0; i < NumMeshes; i++){
-                        MeshInfo mesh = Meshes[i];
-                        HitInfo hit = hit_mesh(mesh, r);
+                    for (int i = 0; i < NumMeshParents; i++){
+                        MeshParent meshParent = MeshParents[i];
+                        HitInfo hit = hit_mesh_parent(meshParent, r);
                         if (hit.err) {
                             return float4(1,0,0,1);
                         }
                         if (hit.did_hit) {
                             if (hit.dist < closestHit.dist) {
                                 closestHit = hit;
-                                closestHit.material = mesh.material;
                             }
                         }
                     }

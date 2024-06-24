@@ -58,7 +58,6 @@ public class RTMesh : MonoBehaviour
             if (materialObjectID != gameObject.GetInstanceID())
             {
                 Material[] materials = new Material[renderer.sharedMaterials.Length];
-                Debug.Log(renderer.name + ": " + renderer.sharedMaterials.Length);
                 for (int i = 0; i < renderer.sharedMaterials.Length; i++)
                 {
                     if (renderer.sharedMaterials[i] != null)

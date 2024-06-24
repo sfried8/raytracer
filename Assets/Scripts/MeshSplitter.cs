@@ -6,104 +6,120 @@ using System;
 public static class MeshSplitter
 {
 
-    public static List<MeshChunk> Split(MeshChunk fullMesh, Vector3Int numSplits, int maxTriangles, int limit = 3)
+    private static List<MeshChunk> SplitOnce(MeshChunk startingMesh, Vector3Int numSplits)
+    {
+        return SplitOnce(new List<MeshChunk> { startingMesh }, numSplits);
+    }
+    private static List<MeshChunk> SplitOnce(List<MeshChunk> startingMeshes, Vector3Int numSplits)
     {
         List<MeshChunk> subMeshChunks = new List<MeshChunk>();
-        List<Triangle> fullMeshTrianglesCopy = new List<Triangle>(fullMesh.triangles);
-
-        Vector3 newBoundsSize = new Vector3(fullMesh.bounds.size.x / numSplits.x, fullMesh.bounds.size.y / numSplits.y, fullMesh.bounds.size.z / numSplits.z);
-        for (int x = 0; x < numSplits.x; x++)
+        foreach (MeshChunk startingMesh in startingMeshes)
         {
-            for (int y = 0; y < numSplits.y; y++)
+
+
+            List<Triangle> fullMeshTrianglesCopy = new List<Triangle>(startingMesh.triangles);
+
+            Vector3 newBoundsSize = new Vector3(startingMesh.bounds.size.x / numSplits.x + 0.1f, startingMesh.bounds.size.y / numSplits.y + 0.1f, startingMesh.bounds.size.z / numSplits.z + 0.1f);
+            for (int x = 0; x < numSplits.x; x++)
             {
-                for (int z = 0; z < numSplits.z; z++)
+                for (int y = 0; y < numSplits.y; y++)
                 {
-                    Vector3 boundsCenter = fullMesh.bounds.min + new Vector3((x + 0.5f) * newBoundsSize.x, (y + 0.5f) * newBoundsSize.y, (z + 0.5f) * newBoundsSize.z);
-                    Bounds chunkBounds = new Bounds(boundsCenter, newBoundsSize);
-                    List<Triangle> chunkTriangles = new List<Triangle>();
-                    List<Vector3> verticesToAdd = new List<Vector3>();
-                    List<Triangle> trianglesToTrack = new List<Triangle>(fullMeshTrianglesCopy);
-                    foreach (Triangle triangle in trianglesToTrack)
+                    for (int z = 0; z < numSplits.z; z++)
                     {
-                        Vector3 a = triangle.Q;
-                        Vector3 b = triangle.u + a;
-                        Vector3 c = triangle.v + a;
-                        if (chunkBounds.Contains(a) || chunkBounds.Contains(b) || chunkBounds.Contains(c))
+                        Vector3 boundsCenter = startingMesh.bounds.min + new Vector3((x + 0.4995f) * newBoundsSize.x, (y + 0.4995f) * newBoundsSize.y, (z + 0.4995f) * newBoundsSize.z);
+                        Bounds chunkBounds = new Bounds(boundsCenter, newBoundsSize);
+                        List<Triangle> chunkTriangles = new List<Triangle>();
+                        List<Vector3> verticesToAdd = new List<Vector3>();
+                        List<Triangle> trianglesToTrack = new List<Triangle>(fullMeshTrianglesCopy);
+                        foreach (Triangle triangle in trianglesToTrack)
                         {
-                            verticesToAdd.Add(a);
-                            verticesToAdd.Add(b);
-                            verticesToAdd.Add(c);
-                            // chunkBounds.Encapsulate(a);
-                            // chunkBounds.Encapsulate(b);
-                            // chunkBounds.Encapsulate(c);
-                            chunkTriangles.Add(triangle);
-                            fullMeshTrianglesCopy.Remove(triangle);
+                            Vector3 a = triangle.Q;
+                            Vector3 b = triangle.u + a;
+                            Vector3 c = triangle.v + a;
+                            if (chunkBounds.Contains(a) || chunkBounds.Contains(b) || chunkBounds.Contains(c))
+                            {
+                                verticesToAdd.Add(a);
+                                verticesToAdd.Add(b);
+                                verticesToAdd.Add(c);
+                                // chunkBounds.Encapsulate(a);
+                                // chunkBounds.Encapsulate(b);
+                                // chunkBounds.Encapsulate(c);
+                                chunkTriangles.Add(triangle);
+                                fullMeshTrianglesCopy.Remove(triangle);
+                            }
                         }
-                    }
-                    if (chunkTriangles.Count == 0)
-                    {
-                        continue;
-                    }
-                    chunkBounds = new Bounds(verticesToAdd[0], Vector3.one * 0.1f);
-                    foreach (Vector3 vertex in verticesToAdd)
-                    {
-                        chunkBounds.Encapsulate(vertex);
-                    }
-                    MeshChunk newSubMeshChunk = new MeshChunk()
-                    {
-                        triangles = chunkTriangles,
-                        bounds = chunkBounds
-                    };
-                    if (chunkTriangles.Count > maxTriangles && limit > 0)
-                    {
-                        subMeshChunks.AddRange(FindBestSplit(newSubMeshChunk, maxTriangles, limit - 1));
-                    }
-                    else
-                    {
-                        Debug.Log((limit == 0 ? "Hit Limit! Triangles remaining: " : "Stopping because triangles are at ") + chunkTriangles.Count);
+                        if (chunkTriangles.Count == 0)
+                        {
+                            continue;
+                        }
+                        chunkBounds = new Bounds(verticesToAdd[0], Vector3.one * 0.1f);
+                        foreach (Vector3 vertex in verticesToAdd)
+                        {
+                            chunkBounds.Encapsulate(vertex);
+                        }
+                        MeshChunk newSubMeshChunk = new MeshChunk()
+                        {
+                            triangles = chunkTriangles,
+                            bounds = chunkBounds
+                        };
+
+
                         subMeshChunks.Add(newSubMeshChunk);
+
+
+
+
                     }
-
-
-
                 }
             }
         }
         return subMeshChunks;
     }
-
-    private static float deviation(List<MeshChunk> meshChunks)
+    public static List<MeshChunk> Split(MeshChunk fullMesh, int maxTriangles, int limit = 5)
     {
-        float totalTriangles = 0.0f;
-        foreach (MeshChunk meshChunk in meshChunks)
+        List<MeshChunk> subMeshChunks = new List<MeshChunk>();
+        List<MeshChunk> firstSplit = FindBestSplit(fullMesh);
+        foreach (MeshChunk chunk in firstSplit)
         {
-            totalTriangles += (float)meshChunk.triangles.Count;
+            if (chunk.triangles.Count > maxTriangles && limit > 0)
+            {
+                subMeshChunks.AddRange(Split(chunk, maxTriangles, limit - 1));
+            }
+            else
+            {
+                subMeshChunks.Add(chunk);
+            }
         }
-        float average = (float)totalTriangles / (float)meshChunks.Count;
-        float dev = 0;
-        foreach (MeshChunk meshChunk in meshChunks)
-        {
-            Debug.Log("meshChunkTrianglesCount: " + meshChunk.triangles.Count);
-            dev += Math.Abs((float)meshChunk.triangles.Count - average);
-        }
-        Debug.Log("total triangles: " + totalTriangles + ", num mesh chunks: " + meshChunks.Count + ", average: " + average);
-        return dev;
+        return subMeshChunks;
     }
-    public static List<MeshChunk> FindBestSplit(MeshChunk fullMesh, int maxTriangles, int limit = 5)
+
+    private static float Cost(MeshChunk meshChunk)
     {
-        Debug.Log("".PadLeft(20 - limit, ' ') + "Finding Best Split. Current Triangle count is " + fullMesh.triangles.Count);
-        List<MeshChunk> splitX = Split(fullMesh, new Vector3Int(2, 1, 1), maxTriangles, limit);
-        List<MeshChunk> splitY = Split(fullMesh, new Vector3Int(1, 2, 1), maxTriangles, limit);
-        List<MeshChunk> splitZ = Split(fullMesh, new Vector3Int(1, 1, 2), maxTriangles, limit);
-        float devX = deviation(splitX);
-        float devY = deviation(splitY);
-        float devZ = deviation(splitZ);
-        Debug.Log(devX + " vs. " + devY + " vs. " + devZ);
-        if (devX <= devY && devX <= devZ)
+        return meshChunk.bounds.size.x * meshChunk.bounds.size.y * meshChunk.bounds.size.z * meshChunk.triangles.Count;
+    }
+    private static float Cost(List<MeshChunk> meshChunks)
+    {
+        float sum = 0f;
+        foreach (MeshChunk chunk in meshChunks)
+        {
+            sum += Cost(chunk);
+        }
+        return sum;
+    }
+
+    public static List<MeshChunk> FindBestSplit(MeshChunk fullMesh)
+    {
+        List<MeshChunk> splitX = SplitOnce(fullMesh, new Vector3Int(2, 1, 1));
+        List<MeshChunk> splitY = SplitOnce(fullMesh, new Vector3Int(1, 2, 1));
+        List<MeshChunk> splitZ = SplitOnce(fullMesh, new Vector3Int(1, 1, 2));
+        float costX = Cost(splitX);
+        float costY = Cost(splitY);
+        float costZ = Cost(splitZ);
+        if (costX <= costY && costX <= costZ)
         {
             return splitX;
         }
-        if (devY <= devX && devY <= devZ)
+        if (costY <= costX && costY <= costZ)
         {
             return splitY;
         }

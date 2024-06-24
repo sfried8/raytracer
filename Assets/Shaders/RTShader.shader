@@ -164,6 +164,10 @@ Shader "Custom/RTShader"
             float3 at(Ray r, float t) {
                 return r.origin + r.direction*t;
             }
+            float fifthPower(float x) {
+                float x2 = x * x;
+                return x2 * x2 * x;
+            }
 
 
             /////////////////
@@ -285,6 +289,10 @@ Shader "Custom/RTShader"
                 
             }
 
+
+            /////////////////
+            // TEXTURES
+            /////////////////
             float4 get_material_color(HitInfo hit) {
                 if (hit.material.flag | CheckerPattern) {
                     int x = (int)floor(hit.hit_point.x * hit.material.invCheckerScale);
@@ -298,10 +306,20 @@ Shader "Custom/RTShader"
 
             }
 
-            float3 refract(float3 ray_direction, float3 surface_normal, float refractive_index_ratio) {
+            /////////////////
+            // DIELECTRICS
+            /////////////////
+            float reflectance(float cosine, float refraction_index) {
+                // Use Schlick's approximation for reflectance.
+                float r0 = (1 - refraction_index) / (1 + refraction_index);
+                r0 = r0*r0;
+                return r0 + (1-r0)*fifthPower(1 - cosine);
+            }
+
+            float3 refract(float3 ray_direction, float3 surface_normal, float refractive_index_ratio, inout uint rng) {
                 float cos_theta = min(dot(-ray_direction, surface_normal), 1.0);
                 float sin_theta = sqrt(1.0 - cos_theta*cos_theta);
-                if (refractive_index_ratio * sin_theta > 1.0) {
+                if (refractive_index_ratio * sin_theta > 1.0 || reflectance(cos_theta, refractive_index_ratio) > RandomValue(rng)) {
                     return reflect(ray_direction, surface_normal);
                 }
                 float3 perp = refractive_index_ratio * (ray_direction + cos_theta * surface_normal);
@@ -310,6 +328,11 @@ Shader "Custom/RTShader"
                 return perp + para;
             }
 
+
+
+            /////////////////
+            // RAY TRACING
+            /////////////////
             float4 ray_color(Ray r, inout uint rng) {
                 float previousRefractiveIndex = 1.0;
                 HitInfo closestHit;
@@ -357,7 +380,7 @@ Shader "Custom/RTShader"
                     float3 scatterDir;
                     if (closestHit.material.refractive_index >= 1.0) {
                         float rir = closestHit.front_face ? (previousRefractiveIndex/closestHit.material.refractive_index) : (closestHit.material.refractive_index/previousRefractiveIndex);
-                        scatterDir = refract(r.direction, closestHit.normal, rir);
+                        scatterDir = refract(r.direction, closestHit.normal, rir, rng);
                         previousRefractiveIndex = closestHit.material.refractive_index;
                         } else {
                         scatterDir = closestHit.normal + RandomPointInSphere(rng);

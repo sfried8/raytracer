@@ -278,7 +278,7 @@ public class RayTracerHelper : MonoBehaviour
 					meshChunk.triangles.Add(triangle);
 					// allTriangles.Add(triangle);
 				}
-				List<MeshChunk> subMeshChunks = shouldSplitMeshes ? MeshSplitter.FindBestSplit(meshChunk, maxTrianglesPerChunk) : new List<MeshChunk>(new MeshChunk[] { meshChunk });
+				List<MeshChunk> subMeshChunks = shouldSplitMeshes ? MeshSplitter.Split(meshChunk, maxTrianglesPerChunk) : new List<MeshChunk> { meshChunk };
 				MeshParent meshParent = new MeshParent()
 				{
 					meshStartIndex = allMeshInfo.Count,

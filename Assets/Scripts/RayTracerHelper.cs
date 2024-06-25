@@ -47,6 +47,16 @@ public class RayTracerHelper : MonoBehaviour
 	public AccumulateSetting accumulateSetting;
 	public bool shouldAccumulate;
 	public bool showBoundingCorners;
+	public enum DebugDisplayMode
+	{
+		DEBUG_NONE = 0,
+		DEBUG_NORMALS = 1,
+		DEBUG_BOXES = 2,
+		DEBUG_TRIANGLES = 4,
+	}
+	public DebugDisplayMode debugDisplayMode;
+	[SerializeField, Range(0, 1000)] int boxTestCap;
+	[SerializeField, Range(0, 5000)] int triangleTestCap;
 	// Materials and render textures
 	Material rayTracingMaterial;
 	Material accumulateMaterial;
@@ -203,7 +213,9 @@ public class RayTracerHelper : MonoBehaviour
 		rayTracingMaterial.SetInt("RaysPerPixel", isGameCam ? numRaysPerPixel : Min(numRaysPerPixel, 2));
 		rayTracingMaterial.SetFloat("DefocusStrength", defocusStrength);
 		rayTracingMaterial.SetFloat("DivergeStrength", divergeStrength);
-		rayTracingMaterial.SetInt("DisplayNormals", displaySurfaceNormals ? 1 : 0);
+		rayTracingMaterial.SetInt("DebugDisplayMode", (int)debugDisplayMode);
+		rayTracingMaterial.SetInt("BoxTestCap", boxTestCap);
+		rayTracingMaterial.SetInt("TriangleTestCap", triangleTestCap);
 
 		// rayTracingMaterial.SetInteger("EnvironmentEnabled", environmentSettings.enabled ? 1 : 0);
 		// rayTracingMaterial.SetColor("GroundColour", environmentSettings.groundColour);

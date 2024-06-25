@@ -47,6 +47,10 @@ public class RayTracerHelper : MonoBehaviour
 	public AccumulateSetting accumulateSetting;
 	public bool shouldAccumulate;
 	public bool showBoundingCorners;
+	public bool showBoxTestCount;
+	[SerializeField, Range(0, 1000)] int boxTestCap;
+	[SerializeField, Range(0, 1000)] int triangleTestCap;
+	public bool showTriangleTestCount;
 	// Materials and render textures
 	Material rayTracingMaterial;
 	Material accumulateMaterial;
@@ -55,7 +59,7 @@ public class RayTracerHelper : MonoBehaviour
 	// Buffers
 	ComputeBuffer sphereBuffer;
 	ComputeBuffer triangleBuffer;
-	ComputeBuffer meshInfoBuffer;
+	ComputeBuffer bvhNodeBuffer;
 	ComputeBuffer meshParentInfoBuffer;
 
 	List<Triangle> allTriangles;
@@ -65,7 +69,7 @@ public class RayTracerHelper : MonoBehaviour
 
 	bool initialized = false;
 	private bool shouldSaveScreenshot = false;
-	List<MeshInfo> allMeshInfo;
+	List<BVHNodeStruct> allBVHInfo;
 	List<MeshParent> allMeshParentInfo;
 	string snapshotDirectory;
 	int snapshotFrame;
@@ -204,6 +208,11 @@ public class RayTracerHelper : MonoBehaviour
 		rayTracingMaterial.SetFloat("DefocusStrength", defocusStrength);
 		rayTracingMaterial.SetFloat("DivergeStrength", divergeStrength);
 		rayTracingMaterial.SetInt("DisplayNormals", displaySurfaceNormals ? 1 : 0);
+		rayTracingMaterial.SetInt("ShowBoxTestCount", showBoxTestCount ? 1 : 0);
+		rayTracingMaterial.SetInt("ShowTriangleTestCount", showTriangleTestCount ? 1 : 0);
+		rayTracingMaterial.SetInt("BoxTestCap", boxTestCap);
+		rayTracingMaterial.SetInt("TriangleTestCap", triangleTestCap);
+
 
 		// rayTracingMaterial.SetInteger("EnvironmentEnabled", environmentSettings.enabled ? 1 : 0);
 		// rayTracingMaterial.SetColor("GroundColour", environmentSettings.groundColour);
@@ -231,10 +240,10 @@ public class RayTracerHelper : MonoBehaviour
 		RTMesh[] meshObjects = FindObjectsOfType<RTMesh>();
 
 		allTriangles ??= new List<Triangle>();
-		allMeshInfo ??= new List<MeshInfo>();
+		allBVHInfo ??= new List<BVHNodeStruct>();
 		allMeshParentInfo ??= new List<MeshParent>();
 		allTriangles.Clear();
-		allMeshInfo.Clear();
+		allBVHInfo.Clear();
 		allMeshParentInfo.Clear();
 
 		for (int i = 0; i < meshObjects.Length; i++)
@@ -278,37 +287,22 @@ public class RayTracerHelper : MonoBehaviour
 					meshChunk.triangles.Add(triangle);
 					// allTriangles.Add(triangle);
 				}
-				List<MeshChunk> subMeshChunks = shouldSplitMeshes ? MeshSplitter.Split(meshChunk, maxTrianglesPerChunk) : new List<MeshChunk> { meshChunk };
-				MeshParent meshParent = new MeshParent()
+				(List<BVHNodeStruct> bvhNodes, List<Triangle> triangles) = MeshSplitter.CreateBVH(meshChunk, maxTrianglesPerChunk, allBVHInfo.Count, allTriangles.Count, 10);
+				for (int i1 = 0; i1 < bvhNodes.Count; i1++)
 				{
-					meshStartIndex = allMeshInfo.Count,
-					numMeshes = subMeshChunks.Count,
-					boundsMin = meshChunk.bounds.min,
-					boundsMax = meshChunk.bounds.max
-				};
-				foreach (MeshChunk subMeshChunk in subMeshChunks)
-				{
-					MeshInfo meshInfo = new MeshInfo()
-					{
-						numTriangles = subMeshChunk.triangles.Count,
-						triangleStartIndex = allTriangles.Count,
-						material = mo.materials[subMeshIndex],
-						boundsMin = subMeshChunk.bounds.min,
-						boundsMax = subMeshChunk.bounds.max
-					};
-					allTriangles.AddRange(subMeshChunk.triangles);
-					meshInfo.material.SetInverseCheckerScale();
-					allMeshInfo.Add(meshInfo);
+					BVHNodeStruct bVHNodeStruct = bvhNodes[i1];
+					bVHNodeStruct.material = mo.materials[subMeshIndex];// .SetInverseCheckerScale();
+					allBVHInfo.Add(bVHNodeStruct);
 				}
-				allMeshParentInfo.Add(meshParent);
+				allTriangles.AddRange(triangles);
 			}
 
 		}
 
-		// numMeshChunks = allMeshInfo.Count;
+		// numMeshChunks = allBVHInfo.Count;
 		numTriangles = allTriangles.Count;
 		ShaderHelper.CreateStructuredBuffer(ref triangleBuffer, allTriangles);
-		ShaderHelper.CreateStructuredBuffer(ref meshInfoBuffer, allMeshInfo);
+		ShaderHelper.CreateStructuredBuffer(ref bvhNodeBuffer, allBVHInfo);
 		ShaderHelper.CreateStructuredBuffer(ref meshParentInfoBuffer, allMeshParentInfo);
 		rayTracingMaterial.SetBuffer("Triangles", triangleBuffer);
 		rayTracingMaterial.SetInt("NumTriangles", numTriangles);
@@ -345,11 +339,11 @@ public class RayTracerHelper : MonoBehaviour
 		// ShaderHelper.CreateStructuredBuffer(ref sphereBuffer, spheres);
 		// rayTracingMaterial.SetBuffer("Spheres", sphereBuffer);
 		// rayTracingMaterial.SetInt("NumSpheres", numSpheres);
-		numMeshChunks = allMeshInfo.Count;
+		numMeshChunks = allBVHInfo.Count;
 		numMeshParents = allMeshParentInfo.Count;
-		rayTracingMaterial.SetBuffer("Meshes", meshInfoBuffer);
-		rayTracingMaterial.SetBuffer("MeshParents", meshParentInfoBuffer);
-		rayTracingMaterial.SetInt("NumMeshParents", allMeshInfo.Count);
+		rayTracingMaterial.SetBuffer("BVHNodes", bvhNodeBuffer);
+		// rayTracingMaterial.SetBuffer("MeshParents", meshParentInfoBuffer);
+		rayTracingMaterial.SetInt("NumBVHNodes", allBVHInfo.Count);
 	}
 
 
@@ -357,7 +351,7 @@ public class RayTracerHelper : MonoBehaviour
 	{
 		// Create sphere data from the sphere objects in the scene
 		RTSphere[] sphereObjects = FindObjectsOfType<RTSphere>();
-		Sphere[] spheres = new Sphere[sphereObjects.Length + (showBoundingCorners ? 8 * allMeshInfo.Count : 0)];
+		Sphere[] spheres = new Sphere[sphereObjects.Length];
 
 		for (int i = 0; i < sphereObjects.Length; i++)
 		{
@@ -371,68 +365,7 @@ public class RayTracerHelper : MonoBehaviour
 
 		}
 
-		if (showBoundingCorners)
-		{
-			float baseRadius = 0.1f;
-			for (int i = 0; i < allMeshInfo.Count; i++)
-			{
-				float boundingCornerRadius = baseRadius + (allMeshInfo[i].numTriangles / 300.0f);
-				Vector3 mi = allMeshInfo[i].boundsMin;
-				Vector3 ma = allMeshInfo[i].boundsMax;
-				RTMaterial material = new RTMaterial();
-				material.SetDefaultValues();
-				material.specularProbability = 0;
-				material.color = Color.HSVToRGB((i * 3.1415926f / allMeshInfo.Count) % 1.0f, 1, 0.8f);
-				spheres[8 * i + sphereObjects.Length] = new Sphere()
-				{
-					origin = mi,
-					radius = boundingCornerRadius,
-					material = material
-				};
-				spheres[8 * i + sphereObjects.Length + 1] = new Sphere()
-				{
-					origin = new Vector3(mi.x, mi.y, ma.z),
-					radius = boundingCornerRadius,
-					material = material
-				};
-				spheres[8 * i + sphereObjects.Length + 2] = new Sphere()
-				{
-					origin = new Vector3(mi.x, ma.y, mi.z),
-					radius = boundingCornerRadius,
-					material = material
-				};
-				spheres[8 * i + sphereObjects.Length + 3] = new Sphere()
-				{
-					origin = new Vector3(ma.x, mi.y, mi.z),
-					radius = boundingCornerRadius,
-					material = material
-				};
-				spheres[8 * i + sphereObjects.Length + 4] = new Sphere()
-				{
-					origin = new Vector3(mi.x, ma.y, ma.z),
-					radius = boundingCornerRadius,
-					material = material
-				};
-				spheres[8 * i + sphereObjects.Length + 5] = new Sphere()
-				{
-					origin = new Vector3(ma.x, mi.y, ma.z),
-					radius = boundingCornerRadius,
-					material = material
-				};
-				spheres[8 * i + sphereObjects.Length + 6] = new Sphere()
-				{
-					origin = new Vector3(ma.x, ma.y, mi.z),
-					radius = boundingCornerRadius,
-					material = material
-				};
-				spheres[8 * i + sphereObjects.Length + 7] = new Sphere()
-				{
-					origin = ma,
-					radius = boundingCornerRadius,
-					material = material
-				};
-			}
-		}
+
 		// Create buffer containing all sphere data, and send it to the shader
 		ShaderHelper.CreateStructuredBuffer(ref sphereBuffer, spheres);
 		rayTracingMaterial.SetBuffer("Spheres", sphereBuffer);
@@ -443,7 +376,7 @@ public class RayTracerHelper : MonoBehaviour
 
 	void OnDisable()
 	{
-		ShaderHelper.Release(sphereBuffer, triangleBuffer, meshInfoBuffer, meshParentInfoBuffer);
+		ShaderHelper.Release(sphereBuffer, triangleBuffer, bvhNodeBuffer, meshParentInfoBuffer);
 		ShaderHelper.Release(resultTexture);
 	}
 

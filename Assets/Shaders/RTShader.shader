@@ -100,6 +100,18 @@ Shader "Custom/RTShader"
                 float3 boundsMin;
                 float3 boundsMax;
             };
+            struct BVHNodeStruct
+            {
+                float3 boundsMin;
+                float3 boundsMax;
+                int childA;
+                int childB;
+                int triangleStartIndex;
+                int numTriangles;
+                RTMaterial material;
+
+            };
+
             /////////////////
             // VARIABLES
             /////////////////
@@ -110,14 +122,20 @@ Shader "Custom/RTShader"
             StructuredBuffer<Sphere> Spheres;
             StructuredBuffer<Triangle> Triangles;
             StructuredBuffer<MeshInfo> Meshes;
+            StructuredBuffer<BVHNodeStruct> BVHNodes;
             StructuredBuffer<MeshParent> MeshParents;
             int Frame;
             int NumSpheres;
             int NumTriangles;
             int NumMeshParents;
+            int NumBVHNodes;
             int MaxBounces;
             int RaysPerPixel;
             bool DisplayNormals;
+            bool ShowBoxTestCount;
+            bool ShowTriangleTestCount;
+            int BoxTestCap;
+            int TriangleTestCap;
 
             /////////////////
             // RNG
@@ -289,6 +307,36 @@ Shader "Custom/RTShader"
                 
             }
 
+            HitInfo hit_bvh_node(BVHNodeStruct bvhNode, Ray r, inout int2 stats) {
+                BVHNodeStruct stack[10];
+                stack[0] = bvhNode;
+                int stackIndex = 1;
+                int safetyLimit = 100;
+                HitInfo closestHit = (HitInfo)0;
+                closestHit.dist = 1.#INF;
+                while (safetyLimit-- > 0 && stackIndex > 0) {
+                    BVHNodeStruct node = stack[--stackIndex];
+                    stats[0] ++;
+                    if (hit_aabb(node.boundsMin, node.boundsMax, r)) {
+                        if (node.childA == 0 && node.childB == 0) {
+                            HitInfo hit = (HitInfo)0;
+                            for (int i = 0; i < node.numTriangles; i++) {
+                                Triangle tri = Triangles[node.triangleStartIndex + i];
+                                stats[1]++;
+                                hit = hit_triangle(tri, r);
+                                if (hit.did_hit && hit.dist < closestHit.dist) {
+                                    closestHit = hit;
+                                    closestHit.material = node.material;
+                                }
+                            }
+                            } else {
+                            stack[stackIndex++] = BVHNodes[node.childA];
+                            stack[stackIndex++] = BVHNodes[node.childB];
+                        }
+                    }
+                }
+                return closestHit;
+            }
 
             /////////////////
             // TEXTURES
@@ -338,6 +386,7 @@ Shader "Custom/RTShader"
                 HitInfo closestHit;
                 float3 currentRayColor = float3(1,1,1);
                 float3 light = float3(0,0,0);
+                int2 stats;
                 for(int bounce = 0; bounce < MaxBounces; bounce++) {
 
                     closestHit.dist = 1.#INF;
@@ -352,16 +401,22 @@ Shader "Custom/RTShader"
                             }
                         }
                     }
-                    for (int i = 0; i < NumMeshParents; i++){
-                        MeshParent meshParent = MeshParents[i];
-                        HitInfo hit = hit_mesh_parent(meshParent, r);
-                        if (hit.err) {
-                            return float4(1,0,0,1);
-                        }
-                        if (hit.did_hit) {
-                            if (hit.dist < closestHit.dist) {
-                                closestHit = hit;
-                            }
+                    // for (int i = 0; i < NumMeshParents; i++){
+                        //     MeshParent meshParent = MeshParents[i];
+                        //     HitInfo hit = hit_mesh_parent(meshParent, r);
+                        //     if (hit.err) {
+                            //         return float4(1,0,0,1);
+                        //     }
+                        //     if (hit.did_hit) {
+                            //         if (hit.dist < closestHit.dist) {
+                                //             closestHit = hit;
+                            //         }
+                        //     }
+                    // }
+                    for (int i = 0; i < NumBVHNodes; i++) {
+                        HitInfo hit = hit_bvh_node(BVHNodes[i], r, stats);
+                        if (hit.did_hit && hit.dist < closestHit.dist)  {
+                            closestHit = hit;
                         }
                     }
                     if (!closestHit.did_hit) {
@@ -369,6 +424,16 @@ Shader "Custom/RTShader"
                         break;
                     }
 
+                    if (ShowBoxTestCount) {
+                        if (stats[0] > BoxTestCap) return float4(1,0,0,1);
+                        float p = (float)stats[0]/BoxTestCap;
+                        return float4(p,p,p,1);
+                    }
+                    if (ShowTriangleTestCount) {
+                        if (stats[1] > TriangleTestCap) return float4(1,0,0,1);
+                        float p = (float)stats[1]/TriangleTestCap;
+                        return float4(p,p,p,1);    
+                    }
                     if (DisplayNormals) {
                         return float4(closestHit.normal, 1);
                     }

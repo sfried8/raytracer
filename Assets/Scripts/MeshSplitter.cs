@@ -2,7 +2,13 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
-
+public class BVHNode
+{
+    public MeshChunk meshChunk;
+    public int index;
+    public BVHNode childA;
+    public BVHNode childB;
+}
 public static class MeshSplitter
 {
 
@@ -48,11 +54,7 @@ public static class MeshSplitter
                                 fullMeshTrianglesCopy.Remove(triangle);
                             }
                         }
-                        if (chunkTriangles.Count == 0)
-                        {
-                            continue;
-                        }
-                        chunkBounds = new Bounds(verticesToAdd[0], Vector3.one * 0.1f);
+                        chunkBounds = new Bounds(verticesToAdd.Count > 0 ? verticesToAdd[0] : Vector3.zero, Vector3.one * 0.1f);
                         foreach (Vector3 vertex in verticesToAdd)
                         {
                             chunkBounds.Encapsulate(vertex);
@@ -74,6 +76,78 @@ public static class MeshSplitter
             }
         }
         return subMeshChunks;
+    }
+    private static List<BVHNode> flattenBVHNode(BVHNode parent, int safetyLimit = 100)
+    {
+        List<BVHNode> nodes = new List<BVHNode> { parent };
+        if (parent.childA != null && safetyLimit > 0)
+        {
+            nodes.AddRange(flattenBVHNode(parent.childA, safetyLimit - 1));
+        }
+        if (parent.childB != null && safetyLimit > 0)
+        {
+            nodes.AddRange(flattenBVHNode(parent.childB, safetyLimit - 1));
+        }
+        return nodes;
+    }
+    public static (List<BVHNodeStruct>, List<Triangle>) CreateBVHStructs(BVHNode parent, int meshStartIndex, int triangleStartIndex)
+    {
+        List<BVHNodeStruct> nodeStructs = new List<BVHNodeStruct>();
+        List<Triangle> triangles = new List<Triangle>();
+        List<BVHNode> flattenedBVHNodes = flattenBVHNode(parent);
+        for (int i = 0; i < flattenedBVHNodes.Count; i++)
+        {
+            BVHNode bVHNode = flattenedBVHNodes[i];
+            bVHNode.index = i + meshStartIndex;
+        }
+        foreach (BVHNode node in flattenedBVHNodes)
+        {
+            BVHNodeStruct nodeStruct = new BVHNodeStruct()
+            {
+                childA = 0,
+                childB = 0
+            };
+            if (node.childA != null)
+            {
+                nodeStruct.childA = node.childA.index;
+            }
+            if (node.childB != null)
+            {
+                nodeStruct.childB = node.childB.index;
+            }
+            if (node.childA == null && node.childB == null)
+            {
+                nodeStruct.numTriangles = node.meshChunk.triangles.Count;
+                nodeStruct.triangleStartIndex = triangles.Count + triangleStartIndex;
+                triangles.AddRange(node.meshChunk.triangles);
+            }
+            nodeStruct.boundsMin = node.meshChunk.bounds.min;
+            nodeStruct.boundsMax = node.meshChunk.bounds.max;
+            nodeStructs.Add(nodeStruct);
+        }
+        return (nodeStructs, triangles);
+    }
+    public static (List<BVHNodeStruct>, List<Triangle>) CreateBVH(MeshChunk parentMesh, int maxTriangles, int meshStartIndex, int triangleStartIndex, int limit = 10)
+    {
+        BVHNode tree = MeshChunkToBVHNode(parentMesh, maxTriangles, limit);
+        return CreateBVHStructs(tree, meshStartIndex, triangleStartIndex);
+    }
+    public static BVHNode MeshChunkToBVHNode(MeshChunk meshChunk, int maxTriangles, int limit = 10)
+    {
+        BVHNode node = new BVHNode()
+        {
+            meshChunk = meshChunk,
+            childA = null,
+            childB = null
+        };
+        if (meshChunk.triangles.Count > maxTriangles && limit > 0)
+        {
+            List<MeshChunk> split = FindBestSplit(meshChunk);
+            Debug.Log($"split length: {split.Count}");
+            node.childA = MeshChunkToBVHNode(split[0], maxTriangles, limit - 1);
+            node.childB = MeshChunkToBVHNode(split[1], maxTriangles, limit - 1);
+        }
+        return node;
     }
     public static List<MeshChunk> Split(MeshChunk fullMesh, int maxTriangles, int limit = 5)
     {

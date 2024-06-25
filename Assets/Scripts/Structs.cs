@@ -43,3 +43,16 @@ public struct MeshParent
     public Vector3 boundsMin;
     public Vector3 boundsMax;
 }
+
+
+public struct BVHNodeStruct
+{
+    public Vector3 boundsMin;
+    public Vector3 boundsMax;
+    public int childA;
+    public int childB;
+    public int triangleStartIndex;
+    public int numTriangles;
+    public RTMaterial material;
+
+}

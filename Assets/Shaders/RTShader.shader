@@ -131,12 +131,13 @@ Shader "Custom/RTShader"
             int NumBVHNodes;
             int MaxBounces;
             int RaysPerPixel;
-            bool DisplayNormals;
-            bool ShowBoxTestCount;
-            bool ShowTriangleTestCount;
             int BoxTestCap;
             int TriangleTestCap;
 
+            int DebugDisplayMode;
+            static const int DEBUG_NORMALS = 1;
+            static const int DEBUG_BOXES = 2;
+            static const int DEBUG_TRIANGLES = 4;
             /////////////////
             // RNG
             /////////////////
@@ -264,10 +265,11 @@ Shader "Custom/RTShader"
                 return tNear <= tFar;
             }
 
-            HitInfo hit_mesh(MeshInfo mesh, Ray r) {
+            HitInfo hit_mesh(MeshInfo mesh, Ray r, inout int2 stats) {
                 HitInfo closestHit = (HitInfo)0;
                 closestHit.dist = 1.#INF;
                 closestHit.material = mesh.material;
+                stats[0]++;
                 if (!hit_aabb(mesh.boundsMin, mesh.boundsMax, r)) {
                     // closestHit.err = true;
                     return closestHit;
@@ -275,6 +277,7 @@ Shader "Custom/RTShader"
                 HitInfo hit = (HitInfo)0;
                 for (int i = 0; i < mesh.numTriangles; i++) {
                     Triangle tri = Triangles[mesh.triangleStartIndex + i];
+                    stats[1]++;
                     hit = hit_triangle(tri, r);
                     if (hit.did_hit) {
                         if (hit.dist < closestHit.dist) {
@@ -286,9 +289,10 @@ Shader "Custom/RTShader"
                 return closestHit;
             }
 
-            HitInfo hit_mesh_parent(MeshParent meshParent, Ray r) {
+            HitInfo hit_mesh_parent(MeshParent meshParent, Ray r, inout int2 stats) {
                 HitInfo closestHit = (HitInfo)0;
                 closestHit.dist = 1.#INF;
+                stats[0]++;
                 if (!hit_aabb(meshParent.boundsMin, meshParent.boundsMax, r)) {
                     // closestHit.err = true;
                     return closestHit;
@@ -296,7 +300,7 @@ Shader "Custom/RTShader"
                 HitInfo hit = (HitInfo)0;
                 for (int i = 0; i < meshParent.numMeshes; i++) {
                     MeshInfo mesh = Meshes[meshParent.meshStartIndex + i];
-                    hit = hit_mesh(mesh, r);
+                    hit = hit_mesh(mesh, r, stats);
                     if (hit.did_hit) {
                         if (hit.dist < closestHit.dist) {
                             closestHit = hit;
@@ -423,18 +427,17 @@ Shader "Custom/RTShader"
                         light += currentRayColor * float3(0,0.14,0.74);
                         break;
                     }
-
-                    if (ShowBoxTestCount) {
+                    if (DebugDisplayMode == DEBUG_BOXES) {
                         if (stats[0] > BoxTestCap) return float4(1,0,0,1);
                         float p = (float)stats[0]/BoxTestCap;
                         return float4(p,p,p,1);
                     }
-                    if (ShowTriangleTestCount) {
+                    if (DebugDisplayMode == DEBUG_TRIANGLES) {
                         if (stats[1] > TriangleTestCap) return float4(1,0,0,1);
                         float p = (float)stats[1]/TriangleTestCap;
                         return float4(p,p,p,1);    
                     }
-                    if (DisplayNormals) {
+                    if (DebugDisplayMode == DEBUG_NORMALS) {
                         return float4(closestHit.normal, 1);
                     }
                     bool isSpecular = RandomValue(rng) <= closestHit.material.specularProbability;

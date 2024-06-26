@@ -8,78 +8,83 @@ public class BVHNode
     public int index;
     public BVHNode childA;
     public BVHNode childB;
+    public int depth;
 }
 public static class MeshSplitter
 {
 
-    private static List<MeshChunk> SplitOnce(MeshChunk startingMesh, Vector3Int numSplits)
+    private static Vector3 TriangleCenter(Triangle triangle)
     {
-        return SplitOnce(new List<MeshChunk> { startingMesh }, numSplits);
+        return (3 * triangle.Q + triangle.u + triangle.v) / 3.0f;
     }
-    private static List<MeshChunk> SplitOnce(List<MeshChunk> startingMeshes, Vector3Int numSplits)
+    private static (MeshChunk meshChunkA, MeshChunk meshChunkB) SplitOnce(MeshChunk startingMesh, int axis)
     {
-        List<MeshChunk> subMeshChunks = new List<MeshChunk>();
-        foreach (MeshChunk startingMesh in startingMeshes)
+
+
+
+
+        // Vector3 newBoundsSize = startingMesh.bounds.size * 1.1f;//.x, startingMesh.bounds.size.y, startingMesh.bounds.size.z / numSplits.z + 0.1f);
+        Vector3 boundsCenterA = startingMesh.bounds.center;
+        Vector3 boundsCenterB = startingMesh.bounds.center;
+        if (axis == 0)
         {
-
-
-            List<Triangle> fullMeshTrianglesCopy = new List<Triangle>(startingMesh.triangles);
-
-            Vector3 newBoundsSize = new Vector3(startingMesh.bounds.size.x / numSplits.x + 0.1f, startingMesh.bounds.size.y / numSplits.y + 0.1f, startingMesh.bounds.size.z / numSplits.z + 0.1f);
-            for (int x = 0; x < numSplits.x; x++)
+            boundsCenterA.x -= startingMesh.bounds.size.x / 4.0f;
+            boundsCenterB.x += startingMesh.bounds.size.x / 4.0f;
+        }
+        else if (axis == 1)
+        {
+            boundsCenterA.y -= startingMesh.bounds.size.y / 4.0f;
+            boundsCenterB.y += startingMesh.bounds.size.y / 4.0f;
+        }
+        else
+        {
+            boundsCenterA.z -= startingMesh.bounds.size.z / 4.0f;
+            boundsCenterB.z += startingMesh.bounds.size.z / 4.0f;
+        }
+        MeshChunk meshChunkA = new()
+        {
+            bounds = new Bounds(boundsCenterA, Vector3.one * 0.1f),
+            triangles = new List<Triangle>()
+        };
+        MeshChunk meshChunkB = new()
+        {
+            bounds = new Bounds(boundsCenterB, Vector3.one * 0.1f),
+            triangles = new List<Triangle>()
+        };
+        System.Random r = new System.Random();
+        foreach (Triangle triangle in startingMesh.triangles)
+        {
+            Vector3 triangleCenter = TriangleCenter(triangle);
+            float distanceToA = Vector3.Distance(triangleCenter, boundsCenterA);
+            float distanceToB = Vector3.Distance(triangleCenter, boundsCenterB);
+            // if (r.NextDouble() > 0.5)
+            if (distanceToA < distanceToB)
             {
-                for (int y = 0; y < numSplits.y; y++)
-                {
-                    for (int z = 0; z < numSplits.z; z++)
-                    {
-                        Vector3 boundsCenter = startingMesh.bounds.min + new Vector3((x + 0.4995f) * newBoundsSize.x, (y + 0.4995f) * newBoundsSize.y, (z + 0.4995f) * newBoundsSize.z);
-                        Bounds chunkBounds = new Bounds(boundsCenter, newBoundsSize);
-                        List<Triangle> chunkTriangles = new List<Triangle>();
-                        List<Vector3> verticesToAdd = new List<Vector3>();
-                        List<Triangle> trianglesToTrack = new List<Triangle>(fullMeshTrianglesCopy);
-                        foreach (Triangle triangle in trianglesToTrack)
-                        {
-                            Vector3 a = triangle.Q;
-                            Vector3 b = triangle.u + a;
-                            Vector3 c = triangle.v + a;
-                            if (chunkBounds.Contains(a) || chunkBounds.Contains(b) || chunkBounds.Contains(c))
-                            {
-                                verticesToAdd.Add(a);
-                                verticesToAdd.Add(b);
-                                verticesToAdd.Add(c);
-                                // chunkBounds.Encapsulate(a);
-                                // chunkBounds.Encapsulate(b);
-                                // chunkBounds.Encapsulate(c);
-                                chunkTriangles.Add(triangle);
-                                fullMeshTrianglesCopy.Remove(triangle);
-                            }
-                        }
-                        chunkBounds = new Bounds(verticesToAdd.Count > 0 ? verticesToAdd[0] : Vector3.zero, Vector3.one * 0.1f);
-                        foreach (Vector3 vertex in verticesToAdd)
-                        {
-                            chunkBounds.Encapsulate(vertex);
-                        }
-                        MeshChunk newSubMeshChunk = new MeshChunk()
-                        {
-                            triangles = chunkTriangles,
-                            bounds = chunkBounds
-                        };
-
-
-                        subMeshChunks.Add(newSubMeshChunk);
-
-
-
-
-                    }
-                }
+                meshChunkA.triangles.Add(triangle);
+                meshChunkA.bounds.Encapsulate(triangle.Q);
+                meshChunkA.bounds.Encapsulate(triangle.Q + triangle.u);
+                meshChunkA.bounds.Encapsulate(triangle.Q + triangle.v);
+            }
+            else
+            {
+                meshChunkB.triangles.Add(triangle);
+                meshChunkB.bounds.Encapsulate(triangle.Q);
+                meshChunkB.bounds.Encapsulate(triangle.Q + triangle.u);
+                meshChunkB.bounds.Encapsulate(triangle.Q + triangle.v);
             }
         }
-        return subMeshChunks;
+
+        return (meshChunkA, meshChunkB);
+
+
+
+
+
     }
+
     private static List<BVHNode> flattenBVHNode(BVHNode parent, int safetyLimit = 100)
     {
-        List<BVHNode> nodes = new List<BVHNode> { parent };
+        List<BVHNode> nodes = new() { parent };
         if (parent.childA != null && safetyLimit > 0)
         {
             nodes.AddRange(flattenBVHNode(parent.childA, safetyLimit - 1));
@@ -92,8 +97,8 @@ public static class MeshSplitter
     }
     public static (List<BVHNodeStruct>, List<Triangle>) CreateBVHStructs(BVHNode parent, int meshStartIndex, int triangleStartIndex)
     {
-        List<BVHNodeStruct> nodeStructs = new List<BVHNodeStruct>();
-        List<Triangle> triangles = new List<Triangle>();
+        List<BVHNodeStruct> nodeStructs = new();
+        List<Triangle> triangles = new();
         List<BVHNode> flattenedBVHNodes = flattenBVHNode(parent);
         for (int i = 0; i < flattenedBVHNodes.Count; i++)
         {
@@ -102,10 +107,11 @@ public static class MeshSplitter
         }
         foreach (BVHNode node in flattenedBVHNodes)
         {
-            BVHNodeStruct nodeStruct = new BVHNodeStruct()
+            BVHNodeStruct nodeStruct = new()
             {
                 childA = 0,
-                childB = 0
+                childB = 0,
+                depth = node.depth
             };
             if (node.childA != null)
             {
@@ -127,45 +133,92 @@ public static class MeshSplitter
         }
         return (nodeStructs, triangles);
     }
-    public static (List<BVHNodeStruct>, List<Triangle>) CreateBVH(MeshChunk parentMesh, int maxTriangles, int meshStartIndex, int triangleStartIndex, int limit = 10)
+    public static (List<BVHNodeStruct>, List<Triangle>) CreateBVH(MeshChunk parentMesh, int meshStartIndex, int triangleStartIndex, int limit = 5)
     {
-        BVHNode tree = MeshChunkToBVHNode(parentMesh, maxTriangles, limit);
+        BVHNode tree = MeshChunkToBVHNode(parentMesh, 0, limit);
+        int numTriangles = 0;
+        int minTriangles = parentMesh.triangles.Count;
+        int maxTriangles = 0;
+        int totalDepth = 0;
+        int minDepth = 10;
+        int maxDepth = 0;
+        int numLeafs = 0;
+        var flattened = flattenBVHNode(tree);
+        foreach (var node in flattened)
+        {
+            if (node.childA == null)
+            {
+                numLeafs++;
+                int numTris = node.meshChunk.triangles.Count;
+                numTriangles += numTris;
+                if (numTris > maxTriangles)
+                {
+                    maxTriangles = numTris;
+                }
+                if (numTris < minTriangles)
+                {
+                    minTriangles = numTris;
+                }
+                totalDepth += node.depth;
+                if (node.depth > maxDepth)
+                {
+                    maxDepth = node.depth;
+                }
+                if (node.depth < minDepth)
+                {
+                    minDepth = node.depth;
+                }
+            }
+        }
+        Debug.Log($"Total Nodes: {flattened.Count}, Total Leafs: {numLeafs}");
+        Debug.Log($"Total Triangles: {parentMesh.triangles.Count} (from mesh), {numTriangles} (from leafs)");
+        Debug.Log($"Triangles: min {minTriangles}, max {maxTriangles}, avg {(float)numTriangles / numLeafs}");
+        Debug.Log($"Depth: min {minDepth}, max {maxDepth}, avg {(float)totalDepth / numLeafs}");
         return CreateBVHStructs(tree, meshStartIndex, triangleStartIndex);
     }
-    public static BVHNode MeshChunkToBVHNode(MeshChunk meshChunk, int maxTriangles, int limit = 10)
+    public static BVHNode MeshChunkToBVHNode(MeshChunk meshChunk, int depth = 0, int limit = 10)
     {
-        BVHNode node = new BVHNode()
+        BVHNode node = new()
         {
             meshChunk = meshChunk,
             childA = null,
-            childB = null
+            childB = null,
+            depth = depth
         };
-        if (meshChunk.triangles.Count > maxTriangles && limit > 0)
+        if (meshChunk.triangles.Count > 1 && depth < limit)
         {
-            List<MeshChunk> split = FindBestSplit(meshChunk);
-            Debug.Log($"split length: {split.Count}");
-            node.childA = MeshChunkToBVHNode(split[0], maxTriangles, limit - 1);
-            node.childB = MeshChunkToBVHNode(split[1], maxTriangles, limit - 1);
+            (MeshChunk meshChunkA, MeshChunk meshChunkB) = FindBestSplit(meshChunk);
+            if (meshChunkA.triangles.Count == 0)
+            {
+                return MeshChunkToBVHNode(meshChunkB, depth + 1);
+            }
+            if (meshChunkB.triangles.Count == 0)
+            {
+                return MeshChunkToBVHNode(meshChunkA, depth + 1);
+            }
+
+            node.childA = MeshChunkToBVHNode(meshChunkA, depth + 1);
+            node.childB = MeshChunkToBVHNode(meshChunkB, depth + 1);
         }
         return node;
     }
-    public static List<MeshChunk> Split(MeshChunk fullMesh, int maxTriangles, int limit = 5)
-    {
-        List<MeshChunk> subMeshChunks = new List<MeshChunk>();
-        List<MeshChunk> firstSplit = FindBestSplit(fullMesh);
-        foreach (MeshChunk chunk in firstSplit)
-        {
-            if (chunk.triangles.Count > maxTriangles && limit > 0)
-            {
-                subMeshChunks.AddRange(Split(chunk, maxTriangles, limit - 1));
-            }
-            else
-            {
-                subMeshChunks.Add(chunk);
-            }
-        }
-        return subMeshChunks;
-    }
+    // public static List<MeshChunk> Split(MeshChunk fullMesh, int maxTriangles, int limit = 5)
+    // {
+    //     List<MeshChunk> subMeshChunks = new List<MeshChunk>();
+    //     List<MeshChunk> firstSplit = FindBestSplit(fullMesh);
+    //     foreach (MeshChunk chunk in firstSplit)
+    //     {
+    //         if (chunk.triangles.Count > maxTriangles && limit > 0)
+    //         {
+    //             subMeshChunks.AddRange(Split(chunk, maxTriangles, limit - 1));
+    //         }
+    //         else
+    //         {
+    //             subMeshChunks.Add(chunk);
+    //         }
+    //     }
+    //     return subMeshChunks;
+    // }
 
     private static float Cost(MeshChunk meshChunk)
     {
@@ -181,23 +234,31 @@ public static class MeshSplitter
         return sum;
     }
 
-    public static List<MeshChunk> FindBestSplit(MeshChunk fullMesh)
+    public static (MeshChunk meshChunkA, MeshChunk meshChunkB) FindBestSplit(MeshChunk fullMesh)
     {
-        List<MeshChunk> splitX = SplitOnce(fullMesh, new Vector3Int(2, 1, 1));
-        List<MeshChunk> splitY = SplitOnce(fullMesh, new Vector3Int(1, 2, 1));
-        List<MeshChunk> splitZ = SplitOnce(fullMesh, new Vector3Int(1, 1, 2));
-        float costX = Cost(splitX);
-        float costY = Cost(splitY);
-        float costZ = Cost(splitZ);
-        if (costX <= costY && costX <= costZ)
+
+        int axis = 0;
+        if (fullMesh.bounds.size.y > fullMesh.bounds.size.x && fullMesh.bounds.size.y > fullMesh.bounds.size.z)
         {
-            return splitX;
+            axis = 1;
         }
-        if (costY <= costX && costY <= costZ)
+        if (fullMesh.bounds.size.z > fullMesh.bounds.size.x && fullMesh.bounds.size.z > fullMesh.bounds.size.y)
         {
-            return splitY;
+            axis = 2;
         }
-        return splitZ;
+        return SplitOnce(fullMesh, axis);
+        // float costX = Cost(splitX);
+        // float costY = Cost(splitY);
+        // float costZ = Cost(splitZ);
+        // if (costX <= costY && costX <= costZ)
+        // {
+        //     return splitX;
+        // }
+        // if (costY <= costX && costY <= costZ)
+        // {
+        //     return splitY;
+        // }
+        // return splitZ;
 
     }
 

@@ -54,5 +54,6 @@ public struct BVHNodeStruct
     public int triangleStartIndex;
     public int numTriangles;
     public RTMaterial material;
+    public int depth;
 
 }

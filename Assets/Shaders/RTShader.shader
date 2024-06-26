@@ -33,7 +33,8 @@ Shader "Custom/RTShader"
             /////////////////
             // STRUCTS
             /////////////////
-            const int CheckerPattern = 1;
+            static const int CheckerPattern = 1;
+            static const int InvisibleLightSource = 2;
 
 
             /////////////////
@@ -109,7 +110,7 @@ Shader "Custom/RTShader"
                 int triangleStartIndex;
                 int numTriangles;
                 RTMaterial material;
-
+                int depth;
             };
 
             /////////////////
@@ -312,7 +313,7 @@ Shader "Custom/RTShader"
             }
 
             HitInfo hit_bvh_node(BVHNodeStruct bvhNode, Ray r, inout int2 stats) {
-                BVHNodeStruct stack[10];
+                BVHNodeStruct stack[15];
                 stack[0] = bvhNode;
                 int stackIndex = 1;
                 int safetyLimit = 100;
@@ -346,7 +347,7 @@ Shader "Custom/RTShader"
             // TEXTURES
             /////////////////
             float4 get_material_color(HitInfo hit) {
-                if (hit.material.flag | CheckerPattern) {
+                if (hit.material.flag == CheckerPattern) {
                     int x = (int)floor(hit.hit_point.x * hit.material.invCheckerScale);
                     int y = (int)floor(hit.hit_point.y * hit.material.invCheckerScale);
                     int z = (int)floor(hit.hit_point.z * hit.material.invCheckerScale);
@@ -418,9 +419,11 @@ Shader "Custom/RTShader"
                         //     }
                     // }
                     for (int i = 0; i < NumBVHNodes; i++) {
-                        HitInfo hit = hit_bvh_node(BVHNodes[i], r, stats);
-                        if (hit.did_hit && hit.dist < closestHit.dist)  {
-                            closestHit = hit;
+                        if (BVHNodes[i].depth == 0) {
+                            HitInfo hit = hit_bvh_node(BVHNodes[i], r, stats);
+                            if (hit.did_hit && hit.dist < closestHit.dist)  {
+                                closestHit = hit;
+                            }
                         }
                     }
                     if (!closestHit.did_hit) {
@@ -440,11 +443,18 @@ Shader "Custom/RTShader"
                     if (DebugDisplayMode == DEBUG_NORMALS) {
                         return float4(closestHit.normal, 1);
                     }
+                    
+
                     bool isSpecular = RandomValue(rng) <= closestHit.material.specularProbability;
                     currentRayColor *= isSpecular ? closestHit.material.specularColor : get_material_color(closestHit);
                     light += currentRayColor * closestHit.material.emissionColor * closestHit.material.emissionStrength;
                     float3 specularDir = reflect(r.direction, closestHit.normal);
-
+                    if (closestHit.material.flag == InvisibleLightSource)
+                    {
+                        // return float4(1,0,0,1);
+                        r.origin = closestHit.hit_point + r.direction * 0.001;
+                        continue;
+                    }
                     float3 scatterDir;
                     if (closestHit.material.refractive_index >= 1.0) {
                         float rir = closestHit.front_face ? (previousRefractiveIndex/closestHit.material.refractive_index) : (closestHit.material.refractive_index/previousRefractiveIndex);

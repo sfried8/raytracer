@@ -21,7 +21,7 @@ public class RayTracerHelper : MonoBehaviour
 	[SerializeField] bool shouldReinitialize = false;
 	[SerializeField] bool shouldSplitMeshes;
 	[SerializeField] Vector3Int numSplits = Vector3Int.one;
-	[SerializeField] int maxTrianglesPerChunk = 96;
+	[SerializeField, Range(1, 15)] int bvhDepthLimit;
 	// [SerializeField] EnvironmentSettings environmentSettings;
 
 	[Header("View Settings")]
@@ -56,7 +56,7 @@ public class RayTracerHelper : MonoBehaviour
 	}
 	public DebugDisplayMode debugDisplayMode;
 	[SerializeField, Range(0, 1000)] int boxTestCap;
-	[SerializeField, Range(0, 5000)] int triangleTestCap;
+	[SerializeField, Range(0, 1000)] int triangleTestCap;
 	// Materials and render textures
 	Material rayTracingMaterial;
 	Material accumulateMaterial;
@@ -238,7 +238,7 @@ public class RayTracerHelper : MonoBehaviour
 	{
 		return t.position + t.rotation * Vector3.Scale(localVec, t.localScale);
 	}
-	void CreateMeshes()
+	public void CreateMeshes()
 	{
 		RTMesh[] meshObjects = FindObjectsOfType<RTMesh>();
 
@@ -290,11 +290,12 @@ public class RayTracerHelper : MonoBehaviour
 					meshChunk.triangles.Add(triangle);
 					// allTriangles.Add(triangle);
 				}
-				(List<BVHNodeStruct> bvhNodes, List<Triangle> triangles) = MeshSplitter.CreateBVH(meshChunk, maxTrianglesPerChunk, allBVHInfo.Count, allTriangles.Count, 10);
+				(List<BVHNodeStruct> bvhNodes, List<Triangle> triangles) = MeshSplitter.CreateBVH(meshChunk, allBVHInfo.Count, allTriangles.Count, bvhDepthLimit);
 				for (int i1 = 0; i1 < bvhNodes.Count; i1++)
 				{
 					BVHNodeStruct bVHNodeStruct = bvhNodes[i1];
-					bVHNodeStruct.material = mo.materials[subMeshIndex];// .SetInverseCheckerScale();
+					bVHNodeStruct.material = mo.materials[subMeshIndex];//
+					bVHNodeStruct.material.SetInverseCheckerScale();
 					allBVHInfo.Add(bVHNodeStruct);
 				}
 				allTriangles.AddRange(triangles);

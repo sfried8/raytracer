@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -21,30 +20,12 @@ public struct TriangleStruct
     public Vector3 normal;
 }
 
-public struct MeshInfo
-{
-    public int numTriangles;
-    public int triangleStartIndex;
-    public Vector3 boundsMin;
-    public Vector3 boundsMax;
-    public RTMaterial material;
-}
-
 public struct MeshChunk
 {
     public List<Triangle> triangles;
     public Bounds bounds;
     public string name;
 }
-
-public struct MeshParent
-{
-    public int numMeshes;
-    public int meshStartIndex;
-    public Vector3 boundsMin;
-    public Vector3 boundsMax;
-}
-
 
 public struct BVHNodeStruct
 {

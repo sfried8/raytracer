@@ -44,6 +44,7 @@ Shader "Custom/RTShader"
             struct Ray {
                 float3 origin;
                 float3 direction;
+                float3 inverseDirection;
             };
 
             struct RTMaterial {
@@ -255,9 +256,8 @@ Shader "Custom/RTShader"
             }
             bool hit_aabb(float3 boundsMin, float3 boundsMax, Ray r) {
                 // r.dir is unit direction vector of ray
-                float3 invDir = 1 / r.direction;
-                float3 tMin = (boundsMin - r.origin) * invDir;
-                float3 tMax = (boundsMax - r.origin) * invDir;
+                float3 tMin = (boundsMin - r.origin) * r.inverseDirection;
+                float3 tMax = (boundsMax - r.origin) * r.inverseDirection;
                 float3 t1 = min(tMin, tMax);
                 float3 t2 = max(tMin, tMax);
                 float tNear = max(max(t1.x, t1.y), t1.z);
@@ -468,6 +468,7 @@ Shader "Custom/RTShader"
                     r = (Ray)0;
                     r.origin = closestHit.hit_point;
                     r.direction = normalize(lerp(scatterDir, specularDir, isSpecular ? closestHit.material.smoothness : 0));
+                    r.inverseDirection = 1.0f / r.direction;
                     
                 }
                 return float4(light, 1);
@@ -502,6 +503,7 @@ Shader "Custom/RTShader"
                     r.origin = _WorldSpaceCameraPos;
                     float2 offset = RandomPointInSquare(rngState);
                     r.direction = normalize((viewPoint - _WorldSpaceCameraPos)) + float3(offset.x/numPixels.x, offset.y/numPixels.y, 0);
+                    r.inverseDirection = 1.0f/r.direction;
                     pixelcolor += ray_color(r, rngState)/float(RaysPerPixel);
                 }
 

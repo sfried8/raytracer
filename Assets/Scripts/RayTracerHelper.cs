@@ -1,11 +1,40 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Rendering;
 using static UnityEngine.Mathf;
 
+
+public enum DebugDisplayMode
+{
+	DEBUG_NONE = 0,
+	DEBUG_NORMALS = 1,
+	DEBUG_BOXES = 2,
+	DEBUG_TRIANGLES = 4,
+}
+public enum AccumulateSetting
+{
+	WhileStatic,
+	Always,
+	Never
+}
+[Serializable]
+public class RTDebugSettings
+{
+	public DebugDisplayMode debugDisplayMode;
+	[SerializeField, Range(0, 1000)] public int boxTestCap;
+	[SerializeField, Range(0, 1000)] public int triangleTestCap;
+	public bool enableCPURayTest;
+
+
+}
+[Serializable]
+public class RTObjectCounts
+{
+	public int triangles;
+	public int bvhNodes;
+	public int bvhParents;
+}
 [ExecuteAlways, ImageEffectAllowedInSceneView]
 public class RayTracerHelper : MonoBehaviour
 {
@@ -24,37 +53,18 @@ public class RayTracerHelper : MonoBehaviour
 
 	[Header("View Settings")]
 	[SerializeField] bool useShaderInSceneView;
-	[Header("Debug")]
-	[SerializeField] bool displaySurfaceNormals;
-	[Header("References")]
-	[SerializeField] Shader rayTracingShader;
-	[SerializeField] Shader accumulateShader;
+	public AccumulateSetting accumulateSetting;
 
+
+	public RTDebugSettings debugSettings = new();
 	[Header("Info")]
 	[SerializeField] int numRenderedFrames;
-	[SerializeField] int numMeshChunks;
-	[SerializeField] int numMeshParents;
-	[SerializeField] int numTriangles;
-	[SerializeField] int numSpheres;
-	public enum AccumulateSetting
-	{
-		WhileStatic,
-		Always,
-		Never
-	}
-	public AccumulateSetting accumulateSetting;
-	public bool shouldAccumulate;
-	public bool showBoundingCorners;
-	public enum DebugDisplayMode
-	{
-		DEBUG_NONE = 0,
-		DEBUG_NORMALS = 1,
-		DEBUG_BOXES = 2,
-		DEBUG_TRIANGLES = 4,
-	}
-	public DebugDisplayMode debugDisplayMode;
-	[SerializeField, Range(0, 1000)] int boxTestCap;
-	[SerializeField, Range(0, 1000)] int triangleTestCap;
+	public RTObjectCounts objectCounts = new();
+	[SerializeField] float framesPerSecond = 0;
+
+	[HideInInspector] public bool shouldAccumulate;
+
+
 	// Materials and render textures
 	Material rayTracingMaterial;
 	Material accumulateMaterial;
@@ -78,8 +88,10 @@ public class RayTracerHelper : MonoBehaviour
 	public List<int> allBvhParents;
 	string snapshotDirectory;
 	int snapshotFrame;
+	[Header("References")]
+	[SerializeField] Shader rayTracingShader;
+	[SerializeField] Shader accumulateShader;
 	public RTAnimation rtAnimation;
-	public bool enableCPURayTest;
 
 	void Start()
 	{
@@ -177,6 +189,7 @@ public class RayTracerHelper : MonoBehaviour
 			RenderTexture.ReleaseTemporary(currentFrame);
 
 			numRenderedFrames += Application.isPlaying && shouldAccumulate ? 1 : 0;
+			framesPerSecond = numRenderedFrames / Time.timeSinceLevelLoad;
 		}
 	}
 
@@ -212,9 +225,9 @@ public class RayTracerHelper : MonoBehaviour
 		rayTracingMaterial.SetInt("RaysPerPixel", isGameCam ? numRaysPerPixel : Min(numRaysPerPixel, 2));
 		rayTracingMaterial.SetFloat("DefocusStrength", defocusStrength);
 		rayTracingMaterial.SetFloat("DivergeStrength", divergeStrength);
-		rayTracingMaterial.SetInt("DebugDisplayMode", (int)debugDisplayMode);
-		rayTracingMaterial.SetInt("BoxTestCap", boxTestCap);
-		rayTracingMaterial.SetInt("TriangleTestCap", triangleTestCap);
+		rayTracingMaterial.SetInt("DebugDisplayMode", (int)debugSettings.debugDisplayMode);
+		rayTracingMaterial.SetInt("BoxTestCap", debugSettings.boxTestCap);
+		rayTracingMaterial.SetInt("TriangleTestCap", debugSettings.triangleTestCap);
 
 		// rayTracingMaterial.SetInteger("EnvironmentEnabled", environmentSettings.enabled ? 1 : 0);
 		// rayTracingMaterial.SetColor("GroundColour", environmentSettings.groundColour);
@@ -268,12 +281,7 @@ public class RayTracerHelper : MonoBehaviour
 					bounds = new Bounds(matchTransform(mesh.vertices[mesh.triangles[subMeshDescriptor.indexStart]], mo.transform), Vector3.one * 0.1f),
 					name = mo.gameObject.name
 				};
-				// MeshInfo meshInfo = new MeshInfo()
-				// {
-				// numTriangles = subMeshDescriptor.indexCount / 3,
-				// triangleStartIndex = allTriangles.Count,
-				// material = mo.materials[subMeshIndex],
-				// };
+
 				for (int triangleVertex = 0; triangleVertex < subMeshDescriptor.indexCount / 3; triangleVertex += 1)
 				{
 					Vector3 a = matchTransform(mesh.vertices[mesh.triangles[subMeshDescriptor.indexStart + 3 * triangleVertex + 0]], mo.transform);
@@ -287,7 +295,7 @@ public class RayTracerHelper : MonoBehaviour
 				}
 				// int depthLimit = (int)Clamp(Log(Pow(meshChunk.triangles.Count / 0.3f, 1.9f)) - 6.4f, 1, 20);
 				// Debug.Log($"{mo.gameObject.name}: {meshChunk.triangles.Count} triangles, depth {depthLimit}");
-				(List<BVHNodeStruct> bvhNodes, List<TriangleStruct> triangles, BVHNode parent) = MeshSplitter.CreateBVH(meshChunk, allBVHInfo.Count, allTriangles.Count, bvhDepthLimit);
+				(List<BVHNodeStruct> bvhNodes, List<TriangleStruct> triangles, BVHNode parent) = BVH.CreateBVH(meshChunk, allBVHInfo.Count, allTriangles.Count, bvhDepthLimit);
 				mo.SetBVHNode(parent);
 				allBVHParentObjects.Add(parent);
 				for (int i1 = 0; i1 < bvhNodes.Count; i1++)
@@ -312,54 +320,21 @@ public class RayTracerHelper : MonoBehaviour
 		}
 
 		// numMeshChunks = allBVHInfo.Count;
-		numTriangles = allTriangles.Count;
 		ShaderHelper.CreateStructuredBuffer(ref triangleBuffer, allTriangles);
 		ShaderHelper.CreateStructuredBuffer(ref bvhNodeBuffer, allBVHInfo);
 		ShaderHelper.CreateStructuredBuffer(ref bvhParentBuffer, allBvhParents);
 		rayTracingMaterial.SetBuffer("Triangles", triangleBuffer);
-		rayTracingMaterial.SetInt("NumTriangles", numTriangles);
-		// numSpheres = numTriangles * 3;
-		// Sphere[] spheres = new Sphere[numSpheres];
+		rayTracingMaterial.SetInt("NumTriangles", allTriangles.Count);
 
-		// for (int i = 0; i < allTriangles.Count; i++)
-		// {
-		// 	Triangle t = allTriangles[i];
-		// 	spheres[3 * i] = new Sphere()
-		// 	{
-		// 		origin = t.x,
-		// 		radius = 0.05f,
-		// 		material = t.material
-		// 	};
-		// 	spheres[3 * i + 1] = new Sphere()
-		// 	{
-		// 		origin = t.y,
-		// 		radius = 0.05f,
-		// 		material = t.material
-		// 	};
-		// 	spheres[3 * i + 2] = new Sphere()
-		// 	{
-		// 		origin = t.z,
-		// 		radius = 0.05f,
-		// 		material = t.material
-		// 	};
-		// }
-		// for (int i = 0; i < spheres.Length; i++)
-		// {
-		// 	Sphere s = spheres[i];
-		// 	Debug.Log(i.ToString() + s.origin);
-		// }
-		// ShaderHelper.CreateStructuredBuffer(ref sphereBuffer, spheres);
-		// rayTracingMaterial.SetBuffer("Spheres", sphereBuffer);
-		// rayTracingMaterial.SetInt("NumSpheres", numSpheres);
-		numMeshChunks = allBVHInfo.Count;
-		numMeshParents = allBvhParents.Count;
 		rayTracingMaterial.SetBuffer("BVHNodes", bvhNodeBuffer);
-		// rayTracingMaterial.SetBuffer("MeshParents", meshParentInfoBuffer);
 		rayTracingMaterial.SetInt("NumBVHNodes", allBVHInfo.Count);
+
 		rayTracingMaterial.SetBuffer("BVHParentIndices", bvhParentBuffer);
 		rayTracingMaterial.SetInt("NumBVHParents", allBvhParents.Count);
-		// rayTracingMaterial.SetBuffer("MeshParents", meshParentInfoBuffer);
-		rayTracingMaterial.SetInt("NumBVHNodes", allBVHInfo.Count);
+
+		objectCounts.triangles = allTriangles.Count;
+		objectCounts.bvhNodes = allBVHInfo.Count;
+		objectCounts.bvhParents = allBvhParents.Count;
 	}
 
 
@@ -385,8 +360,8 @@ public class RayTracerHelper : MonoBehaviour
 		// Create buffer containing all sphere data, and send it to the shader
 		ShaderHelper.CreateStructuredBuffer(ref sphereBuffer, spheres);
 		rayTracingMaterial.SetBuffer("Spheres", sphereBuffer);
-		numSpheres = spheres.Length;
 		rayTracingMaterial.SetInt("NumSpheres", spheres.Length);
+		// RTObjectCounts["Spheres"] = spheres.Length;
 	}
 
 
@@ -410,10 +385,6 @@ public class RayTracerHelper : MonoBehaviour
 	}
 	void OnDrawGizmos()
 	{
-		if (!enableCPURayTest)
-		{
-			return;
-		}
 		// Ray ray = GetComponent<Camera>().ScreenPointToRay(Input.mousePosition);
 		// Debug.Log(ray.ToString());
 		// Gizmos.DrawRay(ray.origin, ray.direction);

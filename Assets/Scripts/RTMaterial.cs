@@ -17,7 +17,7 @@ public struct RTMaterial
 	[Range(0, 1)] public float smoothness;
 	[Range(0, 1)] public float specularProbability;
 
-	[Range(0, 10)] public float refractive_index;
+	[Range(0, 5)] public float refractive_index;
 
 	public MaterialFlag flag;
 	public Color checkerColor2;

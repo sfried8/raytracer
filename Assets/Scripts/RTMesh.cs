@@ -81,7 +81,7 @@ public class RTMesh : MonoBehaviour
         int minDepth = 10;
         int maxDepth = 0;
         int numLeafs = 0;
-        flattenedBVHNodes = MeshSplitter.flattenBVHNode(bVHNode);
+        flattenedBVHNodes = BVH.flattenBVHNode(bVHNode);
         foreach (var node in flattenedBVHNodes)
         {
             if (node.isLeaf)

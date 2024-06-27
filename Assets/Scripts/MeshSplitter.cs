@@ -47,19 +47,7 @@ public static class MeshSplitter
 
     private static (MeshChunk meshChunkA, MeshChunk meshChunkB) SplitOnce(MeshChunk startingMesh, int axis)
     {
-        float boundsCenterAxis;
-        if (axis == 0)
-        {
-            boundsCenterAxis = startingMesh.bounds.center.x;
-        }
-        else if (axis == 1)
-        {
-            boundsCenterAxis = startingMesh.bounds.center.y;
-        }
-        else
-        {
-            boundsCenterAxis = startingMesh.bounds.center.z;
-        }
+        float boundsCenterAxis = startingMesh.bounds.center[axis];
         MeshChunk meshChunkA = new()
         {
             bounds = new(),
@@ -74,19 +62,7 @@ public static class MeshSplitter
         };
         foreach (Triangle triangle in startingMesh.triangles)
         {
-            float triangleCenterAxis;
-            if (axis == 0)
-            {
-                triangleCenterAxis = triangle.center.x;
-            }
-            else if (axis == 1)
-            {
-                triangleCenterAxis = triangle.center.y;
-            }
-            else
-            {
-                triangleCenterAxis = triangle.center.z;
-            }
+            float triangleCenterAxis = triangle.center[axis];
             if (triangleCenterAxis < boundsCenterAxis)
             {
                 if (meshChunkA.triangles.Count == 0)
@@ -161,15 +137,16 @@ public static class MeshSplitter
 
     public static (MeshChunk meshChunkA, MeshChunk meshChunkB) FindBestSplit(MeshChunk fullMesh)
     {
-
         int axis = 0;
-        if (fullMesh.bounds.size.y > fullMesh.bounds.size.x && fullMesh.bounds.size.y > fullMesh.bounds.size.z)
+        float largestSide = 0;
+        for (int i = 0; i < 3; i++)
         {
-            axis = 1;
-        }
-        if (fullMesh.bounds.size.z > fullMesh.bounds.size.x && fullMesh.bounds.size.z > fullMesh.bounds.size.y)
-        {
-            axis = 2;
+            float currentSide = fullMesh.bounds.size[i];
+            if (currentSide > largestSide)
+            {
+                largestSide = currentSide;
+                axis = i;
+            }
         }
         return SplitOnce(fullMesh, axis);
         // float costX = Cost(splitX);

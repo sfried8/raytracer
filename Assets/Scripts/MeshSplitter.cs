@@ -45,9 +45,9 @@ public class Triangle
 public static class MeshSplitter
 {
 
-    private static (MeshChunk meshChunkA, MeshChunk meshChunkB) SplitOnce(MeshChunk startingMesh, int axis)
+    private static (MeshChunk meshChunkA, MeshChunk meshChunkB) SplitOnce(MeshChunk startingMesh, int axis, float percentage)
     {
-        float boundsCenterAxis = startingMesh.bounds.center[axis];
+        float boundsCenterAxis = startingMesh.bounds.min[axis] + percentage * startingMesh.bounds.size[axis];
         MeshChunk meshChunkA = new()
         {
             bounds = new(),
@@ -104,7 +104,13 @@ public static class MeshSplitter
         };
         if (meshChunk.triangles.Count > 1 && depth < limit)
         {
-            (MeshChunk meshChunkA, MeshChunk meshChunkB) = FindBestSplit(meshChunk);
+            (MeshChunk meshChunkA, MeshChunk meshChunkB, float splitCost) = FindBestSplit(meshChunk);
+            float parentCost = Cost(meshChunk);
+            if (splitCost >= parentCost)
+            {
+                Debug.Log($"stopping here at depth {depth} because cost of children ({splitCost}) is greater than parent ({parentCost})");
+                return node;
+            }
             if (meshChunkA.triangles.Count == 0)
             {
                 return MeshChunkToBVHNode(meshChunkB, depth + 1, limit);
@@ -123,7 +129,10 @@ public static class MeshSplitter
 
     private static float Cost(MeshChunk meshChunk)
     {
-        return meshChunk.bounds.size.x * meshChunk.bounds.size.y * meshChunk.bounds.size.z * meshChunk.triangles.Count;
+        float halfSurfaceArea = meshChunk.bounds.size.x * meshChunk.bounds.size.y +
+                                meshChunk.bounds.size.y * meshChunk.bounds.size.z +
+                                meshChunk.bounds.size.z * meshChunk.bounds.size.x;
+        return halfSurfaceArea * meshChunk.triangles.Count;
     }
     private static float Cost(List<MeshChunk> meshChunks)
     {
@@ -135,20 +144,37 @@ public static class MeshSplitter
         return sum;
     }
 
-    public static (MeshChunk meshChunkA, MeshChunk meshChunkB) FindBestSplit(MeshChunk fullMesh)
+    public static (MeshChunk meshChunkA, MeshChunk meshChunkB, float cost) FindBestSplit(MeshChunk fullMesh)
     {
-        int axis = 0;
-        float largestSide = 0;
+        MeshChunk bestSplitA = new();
+        MeshChunk bestSplitB = new();
+        float bestCost = 1e30f;
         for (int i = 0; i < 3; i++)
         {
-            float currentSide = fullMesh.bounds.size[i];
-            if (currentSide > largestSide)
+            (var splitA, var splitB) = SplitOnce(fullMesh, i, 0.5f);
+            var splitCost = Cost(splitA) + Cost(splitB);
+            if (splitCost < bestCost)
             {
-                largestSide = currentSide;
-                axis = i;
+                bestCost = splitCost;
+                bestSplitA = splitA;
+                bestSplitB = splitB;
             }
         }
-        return SplitOnce(fullMesh, axis);
+        return (bestSplitA, bestSplitB, bestCost);
+
+        // int axis = 0;
+        // float largestSide = 0;
+        // for (int i = 0; i < 3; i++)
+        // {
+        //     float currentSide = fullMesh.bounds.size[i];
+        //     if (currentSide > largestSide)
+        //     {
+        //         largestSide = currentSide;
+        //         axis = i;
+        //     }
+        // }
+        // return SplitOnce(fullMesh, axis);
+
         // float costX = Cost(splitX);
         // float costY = Cost(splitY);
         // float costZ = Cost(splitZ);

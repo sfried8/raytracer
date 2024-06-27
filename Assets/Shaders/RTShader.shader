@@ -447,6 +447,10 @@ Shader "Custom/RTShader"
                     bool isSpecular = RandomValue(rng) <= closestHit.material.specularProbability;
                     currentRayColor *= isSpecular ? closestHit.material.specularColor : get_material_color(closestHit);
                     light += currentRayColor * closestHit.material.emissionColor * closestHit.material.emissionStrength;
+                    if (bounce == MaxBounces - 1) {
+                        // if it's the last bounce, no need to calculate the next direction
+                        break;
+                    }
                     float3 specularDir = reflect(r.direction, closestHit.normal);
                     if (closestHit.material.flag == InvisibleLightSource)
                     {

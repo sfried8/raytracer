@@ -446,101 +446,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 126265752}
   m_CullTransparentMesh: 1
---- !u!21 &167969172
-Material:
-  serializedVersion: 8
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: Default-Material
-  m_Shader: {fileID: 46, guid: 0000000000000000f000000000000000, type: 0}
-  m_Parent: {fileID: 0}
-  m_ModifiedSerializedProperties: 0
-  m_ValidKeywords:
-  - _EMISSION
-  m_InvalidKeywords: []
-  m_LightmapFlags: 1
-  m_EnableInstancingVariants: 0
-  m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
-  stringTagMap: {}
-  disabledShaderPasses: []
-  m_LockedProperties: 
-  m_SavedProperties:
-    serializedVersion: 3
-    m_TexEnvs:
-    - _BumpMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _Detail:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _DetailAlbedoMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _DetailMask:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _DetailNormalMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _EmissionMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _MainTex:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _MetallicGlossMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _Occlusion:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _OcclusionMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _ParallaxMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    m_Ints: []
-    m_Floats:
-    - _AlphaTestRef: 0.5
-    - _BumpScale: 1
-    - _Cutoff: 0.5
-    - _DetailNormalMapScale: 1
-    - _DstBlend: 0
-    - _EmissionScaleUI: 1
-    - _GlossMapScale: 1
-    - _Glossiness: 0.5
-    - _GlossyReflections: 1
-    - _Lightmapping: 1
-    - _Metallic: 0
-    - _Mode: 0
-    - _OcclusionStrength: 1
-    - _Parallax: 0.02
-    - _SmoothnessTextureChannel: 0
-    - _SpecularHighlights: 1
-    - _SrcBlend: 1
-    - _UVSec: 0
-    - _ZWrite: 1
-    m_Colors:
-    - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _EmissionColor: {r: 0, g: 0, b: 0, a: 0.99999994}
-    - _EmissionColorUI: {r: 0, g: 0, b: 0, a: 1}
-    - _EmissionColorWithMapUI: {r: 1, g: 1, b: 1, a: 1}
-  m_BuildTextureStacks: []
 --- !u!21 &193426541
 Material:
   serializedVersion: 8
@@ -698,7 +603,7 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 912515824}
   m_SourcePrefab: {fileID: 100100000, guid: 2b165922e4efcef41912a466d3d8d572, type: 3}
---- !u!21 &314369942
+--- !u!21 &335692912
 Material:
   serializedVersion: 8
   m_ObjectHideFlags: 0
@@ -793,7 +698,7 @@ Material:
     - _EmissionColorUI: {r: 0, g: 0, b: 0, a: 1}
     - _EmissionColorWithMapUI: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []
---- !u!21 &681164884
+--- !u!21 &645846027
 Material:
   serializedVersion: 8
   m_ObjectHideFlags: 0
@@ -1012,108 +917,13 @@ MonoBehaviour:
     checkerColor2: {r: 0, g: 0, b: 0, a: 0}
     checkerScale: 0
     invCheckerScale: 0
-  materialObjectID: 27284
+  materialObjectID: 31450
   materialInitFlag: 1
-  boundsMin: {x: 0, y: 0, z: 0}
-  boundsMax: {x: 0, y: 0, z: 0}
-  transformedBoundsMin: {x: 0, y: 0, z: 0}
-  transformedBoundsMax: {x: 0, y: 0, z: 0}
+  totalParentLeafNodes: {x: 31, y: 16}
+  totalMinMaxMeanTriangle: {x: 348, y: 8, z: 74, w: 21.75}
+  totalMinMaxMeanDepth: {x: 64, y: 4, z: 4, w: 4}
+  gizmoBBDepth: 0
   mesh: {fileID: 0}
---- !u!21 &1086520890
-Material:
-  serializedVersion: 8
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: Default-Material
-  m_Shader: {fileID: 46, guid: 0000000000000000f000000000000000, type: 0}
-  m_Parent: {fileID: 0}
-  m_ModifiedSerializedProperties: 0
-  m_ValidKeywords:
-  - _EMISSION
-  m_InvalidKeywords: []
-  m_LightmapFlags: 1
-  m_EnableInstancingVariants: 0
-  m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
-  stringTagMap: {}
-  disabledShaderPasses: []
-  m_LockedProperties: 
-  m_SavedProperties:
-    serializedVersion: 3
-    m_TexEnvs:
-    - _BumpMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _Detail:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _DetailAlbedoMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _DetailMask:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _DetailNormalMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _EmissionMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _MainTex:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _MetallicGlossMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _Occlusion:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _OcclusionMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _ParallaxMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    m_Ints: []
-    m_Floats:
-    - _AlphaTestRef: 0.5
-    - _BumpScale: 1
-    - _Cutoff: 0.5
-    - _DetailNormalMapScale: 1
-    - _DstBlend: 0
-    - _EmissionScaleUI: 1
-    - _GlossMapScale: 1
-    - _Glossiness: 0.5
-    - _GlossyReflections: 1
-    - _Lightmapping: 1
-    - _Metallic: 0
-    - _Mode: 0
-    - _OcclusionStrength: 1
-    - _Parallax: 0.02
-    - _SmoothnessTextureChannel: 0
-    - _SpecularHighlights: 1
-    - _SrcBlend: 1
-    - _UVSec: 0
-    - _ZWrite: 1
-    m_Colors:
-    - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _EmissionColor: {r: 0, g: 0, b: 0, a: 0.99999994}
-    - _EmissionColorUI: {r: 0, g: 0, b: 0, a: 1}
-    - _EmissionColorWithMapUI: {r: 1, g: 1, b: 1, a: 1}
-  m_BuildTextureStacks: []
 --- !u!21 &1102781733
 Material:
   serializedVersion: 8
@@ -1511,12 +1321,12 @@ MonoBehaviour:
     checkerColor2: {r: 0, g: 0, b: 0, a: 0}
     checkerScale: 0
     invCheckerScale: 0
-  materialObjectID: 27298
+  materialObjectID: 31472
   materialInitFlag: 1
-  boundsMin: {x: 0, y: 0, z: 0}
-  boundsMax: {x: 0, y: 0, z: 0}
-  transformedBoundsMin: {x: 0, y: 0, z: 0}
-  transformedBoundsMax: {x: 0, y: 0, z: 0}
+  totalParentLeafNodes: {x: 31, y: 16}
+  totalMinMaxMeanTriangle: {x: 348, y: 8, z: 74, w: 21.75}
+  totalMinMaxMeanDepth: {x: 64, y: 4, z: 4, w: 4}
+  gizmoBBDepth: 0
   mesh: {fileID: 0}
 --- !u!1 &1301017291
 GameObject:
@@ -1562,12 +1372,12 @@ MonoBehaviour:
     checkerColor2: {r: 0, g: 0, b: 0, a: 0}
     checkerScale: 0
     invCheckerScale: 0
-  materialObjectID: 27304
+  materialObjectID: 31476
   materialInitFlag: 1
-  boundsMin: {x: 0, y: 0, z: 0}
-  boundsMax: {x: 0, y: 0, z: 0}
-  transformedBoundsMin: {x: 0, y: 0, z: 0}
-  transformedBoundsMax: {x: 0, y: 0, z: 0}
+  totalParentLeafNodes: {x: 3, y: 2}
+  totalMinMaxMeanTriangle: {x: 12, y: 6, z: 6, w: 6}
+  totalMinMaxMeanDepth: {x: 8, y: 4, z: 4, w: 4}
+  gizmoBBDepth: 0
   mesh: {fileID: 0}
 --- !u!65 &1301017293
 BoxCollider:
@@ -1610,7 +1420,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 1590926130}
+  - {fileID: 645846027}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1844,101 +1654,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!21 &1590926130
-Material:
-  serializedVersion: 8
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: Default-Material
-  m_Shader: {fileID: 46, guid: 0000000000000000f000000000000000, type: 0}
-  m_Parent: {fileID: 0}
-  m_ModifiedSerializedProperties: 0
-  m_ValidKeywords:
-  - _EMISSION
-  m_InvalidKeywords: []
-  m_LightmapFlags: 1
-  m_EnableInstancingVariants: 0
-  m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
-  stringTagMap: {}
-  disabledShaderPasses: []
-  m_LockedProperties: 
-  m_SavedProperties:
-    serializedVersion: 3
-    m_TexEnvs:
-    - _BumpMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _Detail:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _DetailAlbedoMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _DetailMask:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _DetailNormalMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _EmissionMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _MainTex:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _MetallicGlossMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _Occlusion:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _OcclusionMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _ParallaxMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    m_Ints: []
-    m_Floats:
-    - _AlphaTestRef: 0.5
-    - _BumpScale: 1
-    - _Cutoff: 0.5
-    - _DetailNormalMapScale: 1
-    - _DstBlend: 0
-    - _EmissionScaleUI: 1
-    - _GlossMapScale: 1
-    - _Glossiness: 0.5
-    - _GlossyReflections: 1
-    - _Lightmapping: 1
-    - _Metallic: 0
-    - _Mode: 0
-    - _OcclusionStrength: 1
-    - _Parallax: 0.02
-    - _SmoothnessTextureChannel: 0
-    - _SpecularHighlights: 1
-    - _SrcBlend: 1
-    - _UVSec: 0
-    - _ZWrite: 1
-    m_Colors:
-    - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _EmissionColor: {r: 0, g: 0, b: 0, a: 0.99999994}
-    - _EmissionColorUI: {r: 0, g: 0, b: 0, a: 1}
-    - _EmissionColorWithMapUI: {r: 1, g: 1, b: 1, a: 1}
-  m_BuildTextureStacks: []
 --- !u!21 &1675515874
 Material:
   serializedVersion: 8
@@ -2043,8 +1758,52 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 185721323696597934, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
+      propertyPath: gizmoBBDepth
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 185721323696597934, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
       propertyPath: materialObjectID
-      value: -1280
+      value: -29546
+      objectReference: {fileID: 0}
+    - target: {fileID: 185721323696597934, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
+      propertyPath: totalMinMaxMeanDepth.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 185721323696597934, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
+      propertyPath: totalMinMaxMeanDepth.x
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 185721323696597934, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
+      propertyPath: totalMinMaxMeanDepth.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 185721323696597934, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
+      propertyPath: totalMinMaxMeanDepth.z
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 185721323696597934, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
+      propertyPath: totalParentLeafNodes.x
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 185721323696597934, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
+      propertyPath: totalParentLeafNodes.y
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 185721323696597934, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
+      propertyPath: totalMinMaxMeanTriangle.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 185721323696597934, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
+      propertyPath: totalMinMaxMeanTriangle.x
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 185721323696597934, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
+      propertyPath: totalMinMaxMeanTriangle.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 185721323696597934, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
+      propertyPath: totalMinMaxMeanTriangle.z
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 185721323696597934, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
       propertyPath: materials.Array.data[0].smoothness
@@ -2052,7 +1811,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 185721323696597934, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
       propertyPath: materials.Array.data[0].specularProbability
-      value: 0.296
+      value: 0.678
       objectReference: {fileID: 0}
     - target: {fileID: 293867070825331693, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
       propertyPath: m_LocalPosition.x
@@ -2231,8 +1990,52 @@ PrefabInstance:
       value: 0.042
       objectReference: {fileID: 0}
     - target: {fileID: 4170286648815387385, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
+      propertyPath: gizmoBBDepth
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4170286648815387385, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
       propertyPath: materialObjectID
-      value: -1244
+      value: -29510
+      objectReference: {fileID: 0}
+    - target: {fileID: 4170286648815387385, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
+      propertyPath: totalMinMaxMeanDepth.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4170286648815387385, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
+      propertyPath: totalMinMaxMeanDepth.x
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4170286648815387385, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
+      propertyPath: totalMinMaxMeanDepth.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4170286648815387385, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
+      propertyPath: totalMinMaxMeanDepth.z
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4170286648815387385, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
+      propertyPath: totalParentLeafNodes.x
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 4170286648815387385, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
+      propertyPath: totalParentLeafNodes.y
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4170286648815387385, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
+      propertyPath: totalMinMaxMeanTriangle.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4170286648815387385, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
+      propertyPath: totalMinMaxMeanTriangle.x
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4170286648815387385, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
+      propertyPath: totalMinMaxMeanTriangle.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4170286648815387385, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
+      propertyPath: totalMinMaxMeanTriangle.z
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4170286648815387385, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
       propertyPath: materials.Array.data[0].color.b
@@ -2252,7 +2055,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4170286648815387385, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
       propertyPath: materials.Array.data[0].specularProbability
-      value: 0.296
+      value: 0.663
       objectReference: {fileID: 0}
     - target: {fileID: 4402741673398273271, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
       propertyPath: m_Name
@@ -2283,8 +2086,52 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 118895981}
     - target: {fileID: 6303549229098482654, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
+      propertyPath: gizmoBBDepth
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6303549229098482654, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
       propertyPath: materialObjectID
-      value: -1268
+      value: -29534
+      objectReference: {fileID: 0}
+    - target: {fileID: 6303549229098482654, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
+      propertyPath: totalMinMaxMeanDepth.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6303549229098482654, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
+      propertyPath: totalMinMaxMeanDepth.x
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6303549229098482654, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
+      propertyPath: totalMinMaxMeanDepth.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6303549229098482654, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
+      propertyPath: totalMinMaxMeanDepth.z
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6303549229098482654, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
+      propertyPath: totalParentLeafNodes.x
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 6303549229098482654, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
+      propertyPath: totalParentLeafNodes.y
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6303549229098482654, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
+      propertyPath: totalMinMaxMeanTriangle.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6303549229098482654, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
+      propertyPath: totalMinMaxMeanTriangle.x
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6303549229098482654, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
+      propertyPath: totalMinMaxMeanTriangle.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6303549229098482654, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
+      propertyPath: totalMinMaxMeanTriangle.z
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6303549229098482654, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
       propertyPath: materials.Array.data[0].smoothness
@@ -2292,7 +2139,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6303549229098482654, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
       propertyPath: materials.Array.data[0].specularProbability
-      value: 0.296
+      value: 0.644
       objectReference: {fileID: 0}
     - target: {fileID: 6661642088459420628, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
       propertyPath: m_LocalScale.x
@@ -2355,8 +2202,52 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1102781733}
     - target: {fileID: 8359964930166089158, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
+      propertyPath: gizmoBBDepth
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8359964930166089158, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
       propertyPath: materialObjectID
-      value: -1256
+      value: -29522
+      objectReference: {fileID: 0}
+    - target: {fileID: 8359964930166089158, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
+      propertyPath: totalMinMaxMeanDepth.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8359964930166089158, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
+      propertyPath: totalMinMaxMeanDepth.x
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8359964930166089158, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
+      propertyPath: totalMinMaxMeanDepth.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8359964930166089158, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
+      propertyPath: totalMinMaxMeanDepth.z
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8359964930166089158, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
+      propertyPath: totalParentLeafNodes.x
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 8359964930166089158, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
+      propertyPath: totalParentLeafNodes.y
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8359964930166089158, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
+      propertyPath: totalMinMaxMeanTriangle.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8359964930166089158, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
+      propertyPath: totalMinMaxMeanTriangle.x
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8359964930166089158, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
+      propertyPath: totalMinMaxMeanTriangle.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8359964930166089158, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
+      propertyPath: totalMinMaxMeanTriangle.z
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8359964930166089158, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
       propertyPath: materials.Array.data[0].color.b
@@ -2371,8 +2262,12 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8359964930166089158, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
+      propertyPath: materials.Array.data[0].smoothness
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8359964930166089158, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
       propertyPath: materials.Array.data[0].specularProbability
-      value: 0.296
+      value: 0.648
       objectReference: {fileID: 0}
     - target: {fileID: 8564704275122774770, guid: 7a442bd76afb5734f95b64f4325aca28, type: 3}
       propertyPath: m_Materials.Array.data[0]
@@ -2463,6 +2358,101 @@ Material:
     m_Colors:
     - _Color: {r: 0.681557, g: 0.5655951, b: 0.2671583, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 0}
+  m_BuildTextureStacks: []
+--- !u!21 &1799810564
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Default-Material
+  m_Shader: {fileID: 46, guid: 0000000000000000f000000000000000, type: 0}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords:
+  - _EMISSION
+  m_InvalidKeywords: []
+  m_LightmapFlags: 1
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _BumpMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Detail:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DetailAlbedoMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DetailMask:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DetailNormalMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _EmissionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MetallicGlossMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Occlusion:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _OcclusionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _ParallaxMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _AlphaTestRef: 0.5
+    - _BumpScale: 1
+    - _Cutoff: 0.5
+    - _DetailNormalMapScale: 1
+    - _DstBlend: 0
+    - _EmissionScaleUI: 1
+    - _GlossMapScale: 1
+    - _Glossiness: 0.5
+    - _GlossyReflections: 1
+    - _Lightmapping: 1
+    - _Metallic: 0
+    - _Mode: 0
+    - _OcclusionStrength: 1
+    - _Parallax: 0.02
+    - _SmoothnessTextureChannel: 0
+    - _SpecularHighlights: 1
+    - _SrcBlend: 1
+    - _UVSec: 0
+    - _ZWrite: 1
+    m_Colors:
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _EmissionColor: {r: 0, g: 0, b: 0, a: 0.99999994}
+    - _EmissionColorUI: {r: 0, g: 0, b: 0, a: 1}
+    - _EmissionColorWithMapUI: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []
 --- !u!21 &1849851315
 Material:
@@ -2607,15 +2597,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3e9677e4d5cd9ee4f9876abc96a20859, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxBounceCount: 1
+  maxBounceCount: 6
   numRaysPerPixel: 1
   defocusStrength: 0
   divergeStrength: 0.3
   focusDistance: 1
   shouldReinitialize: 0
-  shouldSplitMeshes: 1
-  numSplits: {x: 1, y: 4, z: 1}
-  bvhDepthLimit: 3
+  bvhDepthLimit: 4
   useShaderInSceneView: 1
   displaySurfaceNormals: 0
   rayTracingShader: {fileID: 4800000, guid: 7082516b3e797b14d8db8204fbefdccf, type: 3}
@@ -2628,10 +2616,12 @@ MonoBehaviour:
   accumulateSetting: 0
   shouldAccumulate: 1
   showBoundingCorners: 0
-  debugDisplayMode: 2
+  debugDisplayMode: 0
   boxTestCap: 264
   triangleTestCap: 0
+  allBvhParents: 
   rtAnimation: {fileID: 0}
+  enableCPURayTest: 0
 --- !u!81 &1861422021
 AudioListener:
   m_ObjectHideFlags: 0
@@ -2706,197 +2696,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!21 &1936145803
-Material:
-  serializedVersion: 8
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: Default-Material
-  m_Shader: {fileID: 46, guid: 0000000000000000f000000000000000, type: 0}
-  m_Parent: {fileID: 0}
-  m_ModifiedSerializedProperties: 0
-  m_ValidKeywords:
-  - _EMISSION
-  m_InvalidKeywords: []
-  m_LightmapFlags: 1
-  m_EnableInstancingVariants: 0
-  m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
-  stringTagMap: {}
-  disabledShaderPasses: []
-  m_LockedProperties: 
-  m_SavedProperties:
-    serializedVersion: 3
-    m_TexEnvs:
-    - _BumpMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _Detail:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _DetailAlbedoMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _DetailMask:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _DetailNormalMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _EmissionMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _MainTex:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _MetallicGlossMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _Occlusion:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _OcclusionMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _ParallaxMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    m_Ints: []
-    m_Floats:
-    - _AlphaTestRef: 0.5
-    - _BumpScale: 1
-    - _Cutoff: 0.5
-    - _DetailNormalMapScale: 1
-    - _DstBlend: 0
-    - _EmissionScaleUI: 1
-    - _GlossMapScale: 1
-    - _Glossiness: 0.5
-    - _GlossyReflections: 1
-    - _Lightmapping: 1
-    - _Metallic: 0
-    - _Mode: 0
-    - _OcclusionStrength: 1
-    - _Parallax: 0.02
-    - _SmoothnessTextureChannel: 0
-    - _SpecularHighlights: 1
-    - _SrcBlend: 1
-    - _UVSec: 0
-    - _ZWrite: 1
-    m_Colors:
-    - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _EmissionColor: {r: 0, g: 0, b: 0, a: 0.99999994}
-    - _EmissionColorUI: {r: 0, g: 0, b: 0, a: 1}
-    - _EmissionColorWithMapUI: {r: 1, g: 1, b: 1, a: 1}
-  m_BuildTextureStacks: []
---- !u!21 &1950421546
-Material:
-  serializedVersion: 8
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: Default-Material
-  m_Shader: {fileID: 46, guid: 0000000000000000f000000000000000, type: 0}
-  m_Parent: {fileID: 0}
-  m_ModifiedSerializedProperties: 0
-  m_ValidKeywords:
-  - _EMISSION
-  m_InvalidKeywords: []
-  m_LightmapFlags: 1
-  m_EnableInstancingVariants: 0
-  m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
-  stringTagMap: {}
-  disabledShaderPasses: []
-  m_LockedProperties: 
-  m_SavedProperties:
-    serializedVersion: 3
-    m_TexEnvs:
-    - _BumpMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _Detail:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _DetailAlbedoMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _DetailMask:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _DetailNormalMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _EmissionMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _MainTex:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _MetallicGlossMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _Occlusion:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _OcclusionMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _ParallaxMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    m_Ints: []
-    m_Floats:
-    - _AlphaTestRef: 0.5
-    - _BumpScale: 1
-    - _Cutoff: 0.5
-    - _DetailNormalMapScale: 1
-    - _DstBlend: 0
-    - _EmissionScaleUI: 1
-    - _GlossMapScale: 1
-    - _Glossiness: 0.5
-    - _GlossyReflections: 1
-    - _Lightmapping: 1
-    - _Metallic: 0
-    - _Mode: 0
-    - _OcclusionStrength: 1
-    - _Parallax: 0.02
-    - _SmoothnessTextureChannel: 0
-    - _SpecularHighlights: 1
-    - _SrcBlend: 1
-    - _UVSec: 0
-    - _ZWrite: 1
-    m_Colors:
-    - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _EmissionColor: {r: 0, g: 0, b: 0, a: 0.99999994}
-    - _EmissionColorUI: {r: 0, g: 0, b: 0, a: 1}
-    - _EmissionColorWithMapUI: {r: 1, g: 1, b: 1, a: 1}
-  m_BuildTextureStacks: []
---- !u!21 &2028575691
+--- !u!21 &2080006135
 Material:
   serializedVersion: 8
   m_ObjectHideFlags: 0

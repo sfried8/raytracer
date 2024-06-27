@@ -114,7 +114,7 @@ public class RTMesh : MonoBehaviour
 
     }
 
-    void OnDrawGizmos()
+    void OnDrawGizmosSelected()
     {
         if (flattenedBVHNodes == null)
         {
@@ -122,18 +122,24 @@ public class RTMesh : MonoBehaviour
         }
         foreach (var node in flattenedBVHNodes)
         {
-            if (node.isLeaf && node.meshChunk.triangles.Count > 1700)
+            if (node.isLeaf && Mathf.Abs(node.meshChunk.triangles.Count - totalMinMaxMeanTriangle.z) < 1)
             {
-
-                foreach (var tri in node.meshChunk.triangles)
-                {
-
-                    Gizmos.DrawLine(tri.a, tri.b);
-                    Gizmos.DrawLine(tri.a, tri.c);
-                    Gizmos.DrawLine(tri.b, tri.c);
-                }
+                Gizmos.color = Color.red;
                 Gizmos.DrawWireCube(node.meshChunk.bounds.center, node.meshChunk.bounds.size);
             }
+            else if (node.depth == gizmoBBDepth)
+            {
+                Gizmos.color = Color.white;
+                Gizmos.DrawWireCube(node.meshChunk.bounds.center, node.meshChunk.bounds.size);
+
+            }
+            // foreach (var tri in node.meshChunk.triangles)
+            // {
+
+            //     Gizmos.DrawLine(tri.a, tri.b);
+            //     Gizmos.DrawLine(tri.a, tri.c);
+            //     Gizmos.DrawLine(tri.b, tri.c);
+            // }
         }
     }
 }

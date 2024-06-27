@@ -9,10 +9,14 @@ public class RTMesh : MonoBehaviour
 
     [SerializeField, HideInInspector] int materialObjectID;
     [SerializeField, HideInInspector] bool materialInitFlag;
-    [SerializeField] Vector3 boundsMin;
-    [SerializeField] Vector3 boundsMax;
-    [SerializeField] Vector3 transformedBoundsMin;
-    [SerializeField] Vector3 transformedBoundsMax;
+
+    [SerializeField, HideInInspector] BVHNode bVHNode;
+    [HideInInspector] List<BVHNode> flattenedBVHNodes;
+
+    [SerializeField] Vector2Int totalParentLeafNodes;
+    [SerializeField] Vector4 totalMinMaxMeanTriangle;
+    [SerializeField] Vector4 totalMinMaxMeanDepth;
+    [SerializeField, Range(1, 10)] int gizmoBBDepth;
 
     public Mesh mesh;
     Vector3 matchTransform(Vector3 localVec, Transform t)
@@ -31,13 +35,7 @@ public class RTMesh : MonoBehaviour
             mesh = GetComponentInChildren<MeshFilter>().sharedMesh;
         }
     }
-    void Update()
-    {
-        boundsMin = mesh.bounds.min;
-        boundsMax = mesh.bounds.max;
-        transformedBoundsMin = matchTransform(boundsMin, transform);
-        transformedBoundsMax = matchTransform(boundsMax, transform);
-    }
+
     void OnValidate()
     {
         if (!materialInitFlag)
@@ -71,6 +69,71 @@ public class RTMesh : MonoBehaviour
                 materialObjectID = gameObject.GetInstanceID();
             }
             // renderer.sharedMaterial.color = material.color;
+        }
+    }
+    public void SetBVHNode(BVHNode bVHNode)
+    {
+        this.bVHNode = bVHNode;
+        int numTriangles = 0;
+        int minTriangles = bVHNode.meshChunk.triangles.Count;
+        int maxTriangles = 0;
+        int totalDepth = 0;
+        int minDepth = 10;
+        int maxDepth = 0;
+        int numLeafs = 0;
+        flattenedBVHNodes = MeshSplitter.flattenBVHNode(bVHNode);
+        foreach (var node in flattenedBVHNodes)
+        {
+            if (node.isLeaf)
+            {
+                numLeafs++;
+                int numTris = node.meshChunk.triangles.Count;
+                numTriangles += numTris;
+                if (numTris > maxTriangles)
+                {
+                    maxTriangles = numTris;
+                }
+                if (numTris < minTriangles)
+                {
+                    minTriangles = numTris;
+                }
+                totalDepth += node.depth;
+                if (node.depth > maxDepth)
+                {
+                    maxDepth = node.depth;
+                }
+                if (node.depth < minDepth)
+                {
+                    minDepth = node.depth;
+                }
+            }
+        }
+        totalParentLeafNodes = new Vector2Int(flattenedBVHNodes.Count, numLeafs);
+        totalMinMaxMeanDepth = new Vector4(totalDepth, minDepth, maxDepth, (float)totalDepth / numLeafs);
+        totalMinMaxMeanTriangle = new Vector4(numTriangles, minTriangles, maxTriangles, (float)numTriangles / numLeafs);
+
+    }
+
+    void OnDrawGizmos()
+    {
+        if (flattenedBVHNodes == null)
+        {
+            return;
+        }
+        foreach (var node in flattenedBVHNodes)
+        {
+            if (node.isLeaf && node.meshChunk.triangles.Count > 1700)
+            {
+
+                foreach (var tri in node.meshChunk.triangles)
+                {
+
+                    Gizmos.DrawLine(tri.a, tri.b);
+                    Gizmos.DrawLine(tri.a, tri.c);
+                    Gizmos.DrawLine(tri.b, tri.c);
+                }
+                Gizmos.DrawWireCube(node.meshChunk.bounds.center, node.meshChunk.bounds.size);
+            }
         }
     }
 }

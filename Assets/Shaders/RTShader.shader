@@ -125,6 +125,7 @@ Shader "Custom/RTShader"
             StructuredBuffer<MeshInfo> Meshes;
             StructuredBuffer<BVHNodeStruct> BVHNodes;
             StructuredBuffer<MeshParent> MeshParents;
+            StructuredBuffer<int> BVHParentIndices;
             int Frame;
             int NumSpheres;
             int NumTriangles;
@@ -134,6 +135,7 @@ Shader "Custom/RTShader"
             int RaysPerPixel;
             int BoxTestCap;
             int TriangleTestCap;
+            int NumBVHParents;
 
             int DebugDisplayMode;
             static const int DEBUG_NORMALS = 1;
@@ -222,10 +224,7 @@ Shader "Custom/RTShader"
             }
             HitInfo hit_triangle(Triangle tri, Ray r) {
                 HitInfo hit = (HitInfo)0;
-                tri.n = cross(tri.u, tri.v);
-                tri.normal = normalize(tri.n);
-                tri.D = dot(tri.normal, tri.Q);
-                tri.w = tri.n / dot(tri.n, tri.n);
+
                 float denom = dot(tri.normal, r.direction);
                 if (denom > -0.00001) {
                     return hit;
@@ -313,13 +312,13 @@ Shader "Custom/RTShader"
             }
 
             HitInfo hit_bvh_node(BVHNodeStruct bvhNode, Ray r, inout int2 stats) {
-                BVHNodeStruct stack[15];
+                BVHNodeStruct stack[12];
                 stack[0] = bvhNode;
                 int stackIndex = 1;
-                int safetyLimit = 100;
+                //int safetyLimit = 100;
                 HitInfo closestHit = (HitInfo)0;
                 closestHit.dist = 1.#INF;
-                while (safetyLimit-- > 0 && stackIndex > 0) {
+                while (stackIndex > 0) {
                     BVHNodeStruct node = stack[--stackIndex];
                     stats[0] ++;
                     if (hit_aabb(node.boundsMin, node.boundsMax, r)) {
@@ -418,13 +417,13 @@ Shader "Custom/RTShader"
                             //         }
                         //     }
                     // }
-                    for (int i = 0; i < NumBVHNodes; i++) {
-                        if (BVHNodes[i].depth == 0) {
-                            HitInfo hit = hit_bvh_node(BVHNodes[i], r, stats);
-                            if (hit.did_hit && hit.dist < closestHit.dist)  {
-                                closestHit = hit;
-                            }
+                    for (int i = 0; i < NumBVHParents; i++) {
+                        
+                        HitInfo hit = hit_bvh_node(BVHNodes[BVHParentIndices[i]], r, stats);
+                        if (hit.did_hit && hit.dist < closestHit.dist)  {
+                            closestHit = hit;
                         }
+                        
                     }
                     if (!closestHit.did_hit) {
                         light += currentRayColor * float3(0,0.14,0.74);

@@ -10,7 +10,7 @@ public struct Sphere
     public RTMaterial material;
 }
 
-public struct Triangle
+public struct TriangleStruct
 {
     public Vector3 Q;
     public Vector3 u;
@@ -34,6 +34,7 @@ public struct MeshChunk
 {
     public List<Triangle> triangles;
     public Bounds bounds;
+    public string name;
 }
 
 public struct MeshParent

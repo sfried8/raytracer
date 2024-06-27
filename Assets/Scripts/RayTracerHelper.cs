@@ -19,8 +19,6 @@ public class RayTracerHelper : MonoBehaviour
 	[SerializeField, Min(0)] float divergeStrength = 0.3f;
 	[SerializeField, Min(0)] float focusDistance = 1;
 	[SerializeField] bool shouldReinitialize = false;
-	[SerializeField] bool shouldSplitMeshes;
-	[SerializeField] Vector3Int numSplits = Vector3Int.one;
 	[SerializeField, Range(1, 15)] int bvhDepthLimit;
 	// [SerializeField] EnvironmentSettings environmentSettings;
 
@@ -66,20 +64,22 @@ public class RayTracerHelper : MonoBehaviour
 	ComputeBuffer sphereBuffer;
 	ComputeBuffer triangleBuffer;
 	ComputeBuffer bvhNodeBuffer;
-	ComputeBuffer meshParentInfoBuffer;
+	ComputeBuffer bvhParentBuffer;
 
-	List<Triangle> allTriangles;
+	public List<TriangleStruct> allTriangles;
 
 
 	bool clearAccumulate = false;
 
 	bool initialized = false;
 	private bool shouldSaveScreenshot = false;
-	List<BVHNodeStruct> allBVHInfo;
-	List<MeshParent> allMeshParentInfo;
+	public List<BVHNodeStruct> allBVHInfo;
+	public List<BVHNode> allBVHParentObjects;
+	public List<int> allBvhParents;
 	string snapshotDirectory;
 	int snapshotFrame;
 	public RTAnimation rtAnimation;
+	public bool enableCPURayTest;
 
 	void Start()
 	{
@@ -134,7 +134,6 @@ public class RayTracerHelper : MonoBehaviour
 		else
 		{
 			InitFrame(true);
-
 
 			RenderTexture prevFrameCopy = RenderTexture.GetTemporary(src.width, src.height, 0, ShaderHelper.RGBA_SFloat);
 
@@ -242,12 +241,14 @@ public class RayTracerHelper : MonoBehaviour
 	{
 		RTMesh[] meshObjects = FindObjectsOfType<RTMesh>();
 
-		allTriangles ??= new List<Triangle>();
+		allTriangles ??= new List<TriangleStruct>();
 		allBVHInfo ??= new List<BVHNodeStruct>();
-		allMeshParentInfo ??= new List<MeshParent>();
+		allBVHParentObjects ??= new();
+		allBvhParents ??= new List<int>();
 		allTriangles.Clear();
 		allBVHInfo.Clear();
-		allMeshParentInfo.Clear();
+		allBvhParents.Clear();
+		allBVHParentObjects.Clear();
 
 		for (int i = 0; i < meshObjects.Length; i++)
 		{
@@ -263,8 +264,9 @@ public class RayTracerHelper : MonoBehaviour
 				SubMeshDescriptor subMeshDescriptor = mesh.GetSubMesh(subMeshIndex);
 				MeshChunk meshChunk = new MeshChunk()
 				{
-					triangles = new List<Triangle>(),
-					bounds = new Bounds(matchTransform(mesh.vertices[mesh.triangles[subMeshDescriptor.indexStart]], mo.transform), Vector3.one * 0.1f)
+					triangles = new(),
+					bounds = new Bounds(matchTransform(mesh.vertices[mesh.triangles[subMeshDescriptor.indexStart]], mo.transform), Vector3.one * 0.1f),
+					name = mo.gameObject.name
 				};
 				// MeshInfo meshInfo = new MeshInfo()
 				// {
@@ -280,22 +282,28 @@ public class RayTracerHelper : MonoBehaviour
 					meshChunk.bounds.Encapsulate(a);
 					meshChunk.bounds.Encapsulate(b);
 					meshChunk.bounds.Encapsulate(c);
-
-					Triangle triangle = new Triangle()
-					{
-						Q = a,
-						u = b - a,
-						v = c - a,
-					};
-					meshChunk.triangles.Add(triangle);
+					meshChunk.triangles.Add(new Triangle(a, b, c));
 					// allTriangles.Add(triangle);
 				}
-				(List<BVHNodeStruct> bvhNodes, List<Triangle> triangles) = MeshSplitter.CreateBVH(meshChunk, allBVHInfo.Count, allTriangles.Count, bvhDepthLimit);
+				// int depthLimit = (int)Clamp(Log(Pow(meshChunk.triangles.Count / 0.3f, 1.9f)) - 6.4f, 1, 20);
+				// Debug.Log($"{mo.gameObject.name}: {meshChunk.triangles.Count} triangles, depth {depthLimit}");
+				(List<BVHNodeStruct> bvhNodes, List<TriangleStruct> triangles, BVHNode parent) = MeshSplitter.CreateBVH(meshChunk, allBVHInfo.Count, allTriangles.Count, bvhDepthLimit);
+				mo.SetBVHNode(parent);
+				allBVHParentObjects.Add(parent);
 				for (int i1 = 0; i1 < bvhNodes.Count; i1++)
 				{
 					BVHNodeStruct bVHNodeStruct = bvhNodes[i1];
+					if (bVHNodeStruct.childA == 0 && bVHNodeStruct.numTriangles == 0)
+					{
+						Debug.Log("UH OH, childless with no triangles. What a loser!");
+					}
+
 					bVHNodeStruct.material = mo.materials[subMeshIndex];//
 					bVHNodeStruct.material.SetInverseCheckerScale();
+					if (bVHNodeStruct.depth == 0)
+					{
+						allBvhParents.Add(allBVHInfo.Count);
+					}
 					allBVHInfo.Add(bVHNodeStruct);
 				}
 				allTriangles.AddRange(triangles);
@@ -307,7 +315,7 @@ public class RayTracerHelper : MonoBehaviour
 		numTriangles = allTriangles.Count;
 		ShaderHelper.CreateStructuredBuffer(ref triangleBuffer, allTriangles);
 		ShaderHelper.CreateStructuredBuffer(ref bvhNodeBuffer, allBVHInfo);
-		ShaderHelper.CreateStructuredBuffer(ref meshParentInfoBuffer, allMeshParentInfo);
+		ShaderHelper.CreateStructuredBuffer(ref bvhParentBuffer, allBvhParents);
 		rayTracingMaterial.SetBuffer("Triangles", triangleBuffer);
 		rayTracingMaterial.SetInt("NumTriangles", numTriangles);
 		// numSpheres = numTriangles * 3;
@@ -344,8 +352,12 @@ public class RayTracerHelper : MonoBehaviour
 		// rayTracingMaterial.SetBuffer("Spheres", sphereBuffer);
 		// rayTracingMaterial.SetInt("NumSpheres", numSpheres);
 		numMeshChunks = allBVHInfo.Count;
-		numMeshParents = allMeshParentInfo.Count;
+		numMeshParents = allBvhParents.Count;
 		rayTracingMaterial.SetBuffer("BVHNodes", bvhNodeBuffer);
+		// rayTracingMaterial.SetBuffer("MeshParents", meshParentInfoBuffer);
+		rayTracingMaterial.SetInt("NumBVHNodes", allBVHInfo.Count);
+		rayTracingMaterial.SetBuffer("BVHParentIndices", bvhParentBuffer);
+		rayTracingMaterial.SetInt("NumBVHParents", allBvhParents.Count);
 		// rayTracingMaterial.SetBuffer("MeshParents", meshParentInfoBuffer);
 		rayTracingMaterial.SetInt("NumBVHNodes", allBVHInfo.Count);
 	}
@@ -380,7 +392,7 @@ public class RayTracerHelper : MonoBehaviour
 
 	void OnDisable()
 	{
-		ShaderHelper.Release(sphereBuffer, triangleBuffer, bvhNodeBuffer, meshParentInfoBuffer);
+		ShaderHelper.Release(sphereBuffer, triangleBuffer, bvhNodeBuffer, bvhParentBuffer);
 		ShaderHelper.Release(resultTexture);
 	}
 
@@ -395,5 +407,15 @@ public class RayTracerHelper : MonoBehaviour
 		// environmentSettings.sunFocus = Mathf.Max(1, environmentSettings.sunFocus);
 		// environmentSettings.sunIntensity = Mathf.Max(0, environmentSettings.sunIntensity);
 
+	}
+	void OnDrawGizmos()
+	{
+		if (!enableCPURayTest)
+		{
+			return;
+		}
+		// Ray ray = GetComponent<Camera>().ScreenPointToRay(Input.mousePosition);
+		// Debug.Log(ray.ToString());
+		// Gizmos.DrawRay(ray.origin, ray.direction);
 	}
 }

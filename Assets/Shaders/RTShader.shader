@@ -443,8 +443,12 @@ Shader "Custom/RTShader"
                         }
                         
                     }
-                    if (!closestHit.did_hit) {
-                        light += currentRayColor * float3(0,0.14,0.74);
+                    if (!closestHit.did_hit) { 
+                        // if (bounce == 0) {
+                            light += currentRayColor * float3(0,0.14,0.74);
+                            // } else {
+                            // light += currentRayColor;
+                        // }
                         break;
                     }
                     if (DebugDisplayMode == DEBUG_NORMALS) {

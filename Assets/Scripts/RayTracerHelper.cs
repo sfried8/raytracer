@@ -250,7 +250,11 @@ public class RayTracerHelper : MonoBehaviour
 
 	Vector3 matchTransform(Vector3 localVec, Transform t)
 	{
-		return t.position + t.rotation * Vector3.Scale(localVec, t.localScale);
+		return matchTransform(localVec, t.position, t.rotation, t.localScale);
+	}
+	Vector3 matchTransform(Vector3 localVec, Vector3 position, UnityEngine.Quaternion rotation, Vector3 localScale)
+	{
+		return position + rotation * Vector3.Scale(localVec, localScale);
 	}
 	public void CreateMeshes()
 	{
@@ -284,19 +288,35 @@ public class RayTracerHelper : MonoBehaviour
 					name = mo.gameObject.name
 				};
 
-				for (int triangleVertex = 0; triangleVertex < subMeshDescriptor.indexCount / 3; triangleVertex += 1)
+				// ...
+
+				int numTriangles = subMeshDescriptor.indexCount / 3;
+				int subMeshDescriptorIndexStart = subMeshDescriptor.indexStart;
+				Triangle[] meshChunkTris = new Triangle[numTriangles];
+				Vector3[] meshVerts = mesh.vertices;
+				int[] meshTris = mesh.triangles;
+				Vector3 moPosition = mo.transform.position;
+				Vector3 moScale = mo.transform.localScale;
+				UnityEngine.Quaternion moRotation = mo.transform.rotation;
+				var sw = System.Diagnostics.Stopwatch.StartNew();
+				for (int triangleVertex = 0; triangleVertex < numTriangles; triangleVertex++)
 				{
-					Vector3 a = matchTransform(mesh.vertices[mesh.triangles[subMeshDescriptor.indexStart + 3 * triangleVertex + 0]], mo.transform);
-					Vector3 b = matchTransform(mesh.vertices[mesh.triangles[subMeshDescriptor.indexStart + 3 * triangleVertex + 1]], mo.transform);
-					Vector3 c = matchTransform(mesh.vertices[mesh.triangles[subMeshDescriptor.indexStart + 3 * triangleVertex + 2]], mo.transform);
+
+					Vector3 a = matchTransform(meshVerts[meshTris[subMeshDescriptorIndexStart + 3 * triangleVertex + 0]], moPosition, moRotation, moScale);
+					Vector3 b = matchTransform(meshVerts[meshTris[subMeshDescriptorIndexStart + 3 * triangleVertex + 1]], moPosition, moRotation, moScale);
+					Vector3 c = matchTransform(meshVerts[meshTris[subMeshDescriptorIndexStart + 3 * triangleVertex + 2]], moPosition, moRotation, moScale);
 					meshChunk.bounds.Encapsulate(a);
 					meshChunk.bounds.Encapsulate(b);
 					meshChunk.bounds.Encapsulate(c);
 					meshChunk.triangles.Add(new Triangle(a, b, c));
 					// allTriangles.Add(triangle);
 				}
+				sw.Stop();
+				Debug.Log($"Populating mesh chunk took {sw.Elapsed}");
+				sw.Restart();
 				// int depthLimit = (int)Clamp(Log(Pow(meshChunk.triangles.Count / 0.3f, 1.9f)) - 6.4f, 1, 20);
 				// Debug.Log($"{mo.gameObject.name}: {meshChunk.triangles.Count} triangles, depth {depthLimit}");
+
 				(List<BVHNodeStruct> bvhNodes, List<TriangleStruct> triangles, BVHNode parent) = BVH.CreateBVH(meshChunk, allBVHInfo.Count, allTriangles.Count, bvhDepthLimit);
 				mo.SetBVHNode(parent);
 				allBVHParentObjects.Add(parent);
@@ -311,6 +331,8 @@ public class RayTracerHelper : MonoBehaviour
 					}
 					allBVHInfo.Add(bVHNodeStruct);
 				}
+				sw.Stop();
+				Debug.Log($"creating bvh took {sw.Elapsed}");
 				allTriangles.AddRange(triangles);
 			}
 

@@ -311,16 +311,18 @@ Shader "Custom/RTShader"
                 
             }
 
-            HitInfo hit_bvh_node(BVHNodeStruct bvhNode, Ray r, inout int2 stats) {
-                BVHNodeStruct stack[32];
-                stack[0] = bvhNode;
+            HitInfo hit_bvh_node(int bvhNodeIndex, Ray r, inout int2 stats) {
+                int stack[32];
+                stack[0] = bvhNodeIndex;
                 int stackIndex = 1;
                 //int safetyLimit = 100;
                 HitInfo closestHit = (HitInfo)0;
                 closestHit.dist = 1.#INF;
                 while (stackIndex > 0) {
-                    BVHNodeStruct node = stack[--stackIndex];
-                    // if (hit_aabb(node.boundsMin, node.boundsMax, r) < closestHit.dist) {
+                    int nodeIndex = stack[--stackIndex];
+                    BVHNodeStruct node = BVHNodes[nodeIndex];
+                    stats[0]++;
+                    if (hit_aabb(node.boundsMin, node.boundsMax, r) < closestHit.dist) {
                         if (node.childAIndex == 0) {
                             HitInfo hit = (HitInfo)0;
                             for (int i = 0; i < node.numTriangles; i++) {
@@ -340,22 +342,20 @@ Shader "Custom/RTShader"
                             float dstB = hit_aabb(childB.boundsMin, childB.boundsMax, r);
                             if (dstA < closestHit.dist) {
                                 if (dstB < closestHit.dist) {
-                                    if (dstA < dstB) {
-                                        stack[stackIndex++] = childB;
-                                        stack[stackIndex++] = childA;
-                                        } else {
-                                        stack[stackIndex++] = childA;
-                                        stack[stackIndex++] = childB;
-                                    }
+                                    int closerIndex = dstA < dstB ? node.childAIndex : node.childAIndex + 1;
+                                    int fartherIndex = dstA >= dstB ? node.childAIndex : node.childAIndex + 1;
+                                    stack[stackIndex++] = fartherIndex;
+                                    stack[stackIndex++] = closerIndex;
+                                    
                                     } else {
-                                    stack[stackIndex++] = childA;
+                                    stack[stackIndex++] = node.childAIndex;
                                 }
                                 } else if (dstB < closestHit.dist) {
-                                stack[stackIndex++] = childB;
+                                stack[stackIndex++] = node.childAIndex + 1;
                                 
                             }
                         }
-                    // }
+                    }
                 }
                 return closestHit;
             }
@@ -435,9 +435,9 @@ Shader "Custom/RTShader"
                             //         }
                         //     }
                     // }
-                    for (int i = 0; i < NumBVHParents; i++) {
+                    for (int i0 = 0; i0 < NumBVHParents; i0++) {
                         
-                        HitInfo hit = hit_bvh_node(BVHNodes[BVHParentIndices[i]], r, stats);
+                        HitInfo hit = hit_bvh_node(BVHParentIndices[i0], r, stats);
                         if (hit.did_hit && hit.dist < closestHit.dist)  {
                             closestHit = hit;
                         }

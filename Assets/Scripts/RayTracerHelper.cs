@@ -7,10 +7,12 @@ using static UnityEngine.Mathf;
 
 public enum DebugDisplayMode
 {
-	DEBUG_NONE = 0,
-	DEBUG_NORMALS = 1,
-	DEBUG_BOXES = 2,
-	DEBUG_TRIANGLES = 4,
+	NONE = 0,
+	NORMALS = 1,
+	BOXES = 2,
+	TRIANGLES = 4,
+	BOXES_AND_TRIANGLES = 8,
+
 }
 public enum AccumulateSetting
 {
@@ -48,7 +50,7 @@ public class RayTracerHelper : MonoBehaviour
 	[SerializeField, Min(0)] float divergeStrength = 0.3f;
 	[SerializeField, Min(0)] float focusDistance = 1;
 	[SerializeField] bool shouldReinitialize = false;
-	[SerializeField, Range(1, 15)] int bvhDepthLimit;
+	[SerializeField, Range(1, 32)] int bvhDepthLimit;
 	// [SerializeField] EnvironmentSettings environmentSettings;
 
 	[Header("View Settings")]
@@ -301,14 +303,9 @@ public class RayTracerHelper : MonoBehaviour
 				for (int i1 = 0; i1 < bvhNodes.Count; i1++)
 				{
 					BVHNodeStruct bVHNodeStruct = bvhNodes[i1];
-					if (bVHNodeStruct.childA == 0 && bVHNodeStruct.numTriangles == 0)
-					{
-						Debug.Log("UH OH, childless with no triangles. What a loser!");
-					}
-
 					bVHNodeStruct.material = mo.materials[subMeshIndex];//
 					bVHNodeStruct.material.SetInverseCheckerScale();
-					if (bVHNodeStruct.depth == 0)
+					if (i1 == 0)
 					{
 						allBvhParents.Add(allBVHInfo.Count);
 					}

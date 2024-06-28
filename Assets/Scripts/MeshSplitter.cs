@@ -108,7 +108,7 @@ public static class MeshSplitter
             float parentCost = Cost(meshChunk);
             if (splitCost >= parentCost)
             {
-                Debug.Log($"stopping here at depth {depth} because cost of children ({splitCost}) is greater than parent ({parentCost})");
+                // Debug.Log($"stopping here at depth {depth} because cost of children ({splitCost}) is greater than parent ({parentCost})");
                 return node;
             }
             if (meshChunkA.triangles.Count == 0)

@@ -31,11 +31,14 @@ Shader "Custom/RTShader"
             }
 
             /////////////////
-            // STRUCTS
+            // CONSTS
             /////////////////
             static const int CheckerPattern = 1;
             static const int InvisibleLightSource = 2;
-
+            static const int DEBUG_NORMALS = 1;
+            static const int DEBUG_BOXES = 2;
+            static const int DEBUG_TRIANGLES = 4;
+            static const int DEBUG_BOXES_AND_TRIANGLES = 8;
 
             /////////////////
             // STRUCTS
@@ -106,12 +109,10 @@ Shader "Custom/RTShader"
             {
                 float3 boundsMin;
                 float3 boundsMax;
-                int childA;
-                int childB;
+                int childAIndex;
                 int triangleStartIndex;
                 int numTriangles;
                 RTMaterial material;
-                int depth;
             };
 
             /////////////////
@@ -139,9 +140,7 @@ Shader "Custom/RTShader"
             int NumBVHParents;
 
             int DebugDisplayMode;
-            static const int DEBUG_NORMALS = 1;
-            static const int DEBUG_BOXES = 2;
-            static const int DEBUG_TRIANGLES = 4;
+
             /////////////////
             // RNG
             /////////////////
@@ -254,7 +253,7 @@ Shader "Custom/RTShader"
                 }
                 return hit;
             }
-            bool hit_aabb(float3 boundsMin, float3 boundsMax, Ray r) {
+            float hit_aabb(float3 boundsMin, float3 boundsMax, Ray r) {
                 // r.dir is unit direction vector of ray
                 float3 tMin = (boundsMin - r.origin) * r.inverseDirection;
                 float3 tMax = (boundsMax - r.origin) * r.inverseDirection;
@@ -262,7 +261,8 @@ Shader "Custom/RTShader"
                 float3 t2 = max(tMin, tMax);
                 float tNear = max(max(t1.x, t1.y), t1.z);
                 float tFar = min(min(t2.x, t2.y), t2.z);
-                return tNear <= tFar;
+                bool hit = tNear <= tFar && tFar > 0;
+                return hit ? tNear : 1.#INF;
             }
 
             HitInfo hit_mesh(MeshInfo mesh, Ray r, inout int2 stats) {
@@ -312,7 +312,7 @@ Shader "Custom/RTShader"
             }
 
             HitInfo hit_bvh_node(BVHNodeStruct bvhNode, Ray r, inout int2 stats) {
-                BVHNodeStruct stack[12];
+                BVHNodeStruct stack[32];
                 stack[0] = bvhNode;
                 int stackIndex = 1;
                 //int safetyLimit = 100;
@@ -320,9 +320,8 @@ Shader "Custom/RTShader"
                 closestHit.dist = 1.#INF;
                 while (stackIndex > 0) {
                     BVHNodeStruct node = stack[--stackIndex];
-                    stats[0] ++;
-                    if (hit_aabb(node.boundsMin, node.boundsMax, r)) {
-                        if (node.childA == 0 && node.childB == 0) {
+                    // if (hit_aabb(node.boundsMin, node.boundsMax, r) < closestHit.dist) {
+                        if (node.childAIndex == 0) {
                             HitInfo hit = (HitInfo)0;
                             for (int i = 0; i < node.numTriangles; i++) {
                                 Triangle tri = Triangles[node.triangleStartIndex + i];
@@ -334,10 +333,29 @@ Shader "Custom/RTShader"
                                 }
                             }
                             } else {
-                            stack[stackIndex++] = BVHNodes[node.childA];
-                            stack[stackIndex++] = BVHNodes[node.childB];
+                            stats[0] += 2;
+                            BVHNodeStruct childA = BVHNodes[node.childAIndex];
+                            BVHNodeStruct childB = BVHNodes[node.childAIndex + 1];
+                            float dstA = hit_aabb(childA.boundsMin, childA.boundsMax, r);
+                            float dstB = hit_aabb(childB.boundsMin, childB.boundsMax, r);
+                            if (dstA < closestHit.dist) {
+                                if (dstB < closestHit.dist) {
+                                    if (dstA < dstB) {
+                                        stack[stackIndex++] = childB;
+                                        stack[stackIndex++] = childA;
+                                        } else {
+                                        stack[stackIndex++] = childA;
+                                        stack[stackIndex++] = childB;
+                                    }
+                                    } else {
+                                    stack[stackIndex++] = childA;
+                                }
+                                } else if (dstB < closestHit.dist) {
+                                stack[stackIndex++] = childB;
+                                
+                            }
                         }
-                    }
+                    // }
                 }
                 return closestHit;
             }
@@ -429,18 +447,22 @@ Shader "Custom/RTShader"
                         light += currentRayColor * float3(0,0.14,0.74);
                         break;
                     }
-                    if (DebugDisplayMode == DEBUG_BOXES) {
-                        if (stats[0] > BoxTestCap) return float4(1,0,0,1);
-                        float p = (float)stats[0]/BoxTestCap;
-                        return float4(p,p,p,1);
-                    }
-                    if (DebugDisplayMode == DEBUG_TRIANGLES) {
-                        if (stats[1] > TriangleTestCap) return float4(1,0,0,1);
-                        float p = (float)stats[1]/TriangleTestCap;
-                        return float4(p,p,p,1);    
-                    }
                     if (DebugDisplayMode == DEBUG_NORMALS) {
                         return float4(closestHit.normal, 1);
+                    }
+                    if (DebugDisplayMode != 0) {
+
+                        float boxCount = (float)stats[0]/BoxTestCap;
+                        float triCount = (float)stats[1]/TriangleTestCap;
+                        if (DebugDisplayMode == DEBUG_BOXES) {
+                            return boxCount > 1.0 ? float4(1,0,0,1) : boxCount;
+                        }
+                        if (DebugDisplayMode == DEBUG_TRIANGLES) {
+                            return triCount > 1.0 ? float4(1,0,0,1) : triCount;
+                        }
+                        if (DebugDisplayMode == DEBUG_BOXES_AND_TRIANGLES) {
+                            return triCount > 1.0 || boxCount > 1.0 ? 1 : float4(triCount, 0, boxCount, 1);
+                        }
                     }
                     
 

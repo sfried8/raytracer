@@ -35,17 +35,11 @@ public static class BVH
         {
             BVHNodeStruct nodeStruct = new()
             {
-                childA = 0,
-                childB = 0,
-                depth = node.depth
+                childAIndex = 0,
             };
             if (node.childA != null)
             {
-                nodeStruct.childA = node.childA.index;
-            }
-            if (node.childB != null)
-            {
-                nodeStruct.childB = node.childB.index;
+                nodeStruct.childAIndex = node.childA.index;
             }
             if (node.isLeaf)
             {
@@ -69,18 +63,29 @@ public static class BVH
         // Debug.Log($"Finished creating BVH tree in {Time.realtimeSinceStartup - startTime} seconds");
         return (structs, tris, tree);
     }
-    public static List<BVHNode> flattenBVHNode(BVHNode parent)
+    public static List<BVHNode> flattenBVHNode(BVHNode parent, int depth = 0)
     {
-        List<BVHNode> nodes = new() { parent };
+        List<BVHNode> nodes = new();
+        if (depth == 0)
+        {
+            nodes.Add(parent);
+        }
         if (parent.childA != null)
         {
-            nodes.AddRange(flattenBVHNode(parent.childA));
+            nodes.Add(parent.childA);
         }
         if (parent.childB != null)
         {
-            nodes.AddRange(flattenBVHNode(parent.childB));
+            nodes.Add(parent.childB);
+        }
+        if (parent.childA != null)
+        {
+            nodes.AddRange(flattenBVHNode(parent.childA, depth + 1));
+        }
+        if (parent.childB != null)
+        {
+            nodes.AddRange(flattenBVHNode(parent.childB, depth + 1));
         }
         return nodes;
     }
-
 }

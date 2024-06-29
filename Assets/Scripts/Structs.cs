@@ -23,7 +23,7 @@ public struct TriangleStruct
 public struct MeshChunk
 {
     public List<Triangle> triangles;
-    public Bounds bounds;
+    public RTBounds bounds;
     public string name;
 }
 

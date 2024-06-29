@@ -51,6 +51,7 @@ public class RayTracerHelper : MonoBehaviour
 	[SerializeField, Min(0)] float focusDistance = 1;
 	[SerializeField] bool shouldReinitialize = false;
 	[SerializeField, Range(1, 32)] int bvhDepthLimit;
+	[SerializeField, Range(1, 32)] int bvhNumSplits = 5;
 	// [SerializeField] EnvironmentSettings environmentSettings;
 
 	[Header("View Settings")]
@@ -284,7 +285,7 @@ public class RayTracerHelper : MonoBehaviour
 				MeshChunk meshChunk = new MeshChunk()
 				{
 					triangles = new(),
-					bounds = new Bounds(matchTransform(mesh.vertices[mesh.triangles[subMeshDescriptor.indexStart]], mo.transform), Vector3.one * 0.1f),
+					bounds = new(),
 					name = mo.gameObject.name
 				};
 
@@ -305,10 +306,9 @@ public class RayTracerHelper : MonoBehaviour
 					Vector3 a = matchTransform(meshVerts[meshTris[subMeshDescriptorIndexStart + 3 * triangleVertex + 0]], moPosition, moRotation, moScale);
 					Vector3 b = matchTransform(meshVerts[meshTris[subMeshDescriptorIndexStart + 3 * triangleVertex + 1]], moPosition, moRotation, moScale);
 					Vector3 c = matchTransform(meshVerts[meshTris[subMeshDescriptorIndexStart + 3 * triangleVertex + 2]], moPosition, moRotation, moScale);
-					meshChunk.bounds.Encapsulate(a);
-					meshChunk.bounds.Encapsulate(b);
-					meshChunk.bounds.Encapsulate(c);
-					meshChunk.triangles.Add(new Triangle(a, b, c));
+					Triangle t = new Triangle(a, b, c);
+					meshChunk.bounds.Encapsulate(t);
+					meshChunk.triangles.Add(t);
 					// allTriangles.Add(triangle);
 				}
 				sw.Stop();
@@ -316,7 +316,7 @@ public class RayTracerHelper : MonoBehaviour
 				sw.Restart();
 				// int depthLimit = (int)Clamp(Log(Pow(meshChunk.triangles.Count / 0.3f, 1.9f)) - 6.4f, 1, 20);
 				// Debug.Log($"{mo.gameObject.name}: {meshChunk.triangles.Count} triangles, depth {depthLimit}");
-
+				MeshSplitter.numSplitsToTest = bvhNumSplits;
 				(List<BVHNodeStruct> bvhNodes, List<TriangleStruct> triangles, BVHNode parent) = BVH.CreateBVH(meshChunk, allBVHInfo.Count, allTriangles.Count, bvhDepthLimit);
 				mo.SetBVHNode(parent);
 				allBVHParentObjects.Add(parent);

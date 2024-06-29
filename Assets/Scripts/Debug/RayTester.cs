@@ -36,43 +36,43 @@ public class RayTester : MonoBehaviour
             while (stack.Count > 0)
             {
                 var currentNode = stack.Pop();
-                if (currentNode.meshChunk.bounds.IntersectRay(ray))
+                // if (currentNode.meshChunk.bounds.IntersectRay(ray))
+                // {
+                if (!currentNode.isLeaf)
                 {
-                    if (!currentNode.isLeaf)
+                    stack.Push(currentNode.childA);
+                    stack.Push(currentNode.childB);
+                    currentNode.childA.parent = currentNode;
+                    currentNode.childB.parent = currentNode;
+                }
+                else
+                {
+                    foreach (var tri in currentNode.meshChunk.triangles)
                     {
-                        stack.Push(currentNode.childA);
-                        stack.Push(currentNode.childB);
-                        currentNode.childA.parent = currentNode;
-                        currentNode.childB.parent = currentNode;
-                    }
-                    else
-                    {
-                        foreach (var tri in currentNode.meshChunk.triangles)
+                        if (CPURayTracer.hit_triangle(tri.ToStruct(), ray))
                         {
-                            if (CPURayTracer.hit_triangle(tri.ToStruct(), ray))
-                            {
-                                Gizmos.color = Color.green;
-                                Gizmos.DrawLine(tri.a, tri.b);
-                                Gizmos.DrawLine(tri.a, tri.c);
-                                Gizmos.DrawLine(tri.b, tri.c);
-                                BVHNode n = currentNode;
-                                Gizmos.DrawWireCube(n.meshChunk.bounds.center, n.meshChunk.bounds.size);
-                                // while (n != null)
-                                // {
-                                //     Gizmos.DrawWireCube(n.meshChunk.bounds.center, n.meshChunk.bounds.size);
-                                //     n = n.parent;
-                                // }
-                            }
-                            // else
+                            Gizmos.color = Color.green;
+                            Gizmos.DrawLine(tri.a, tri.b);
+                            Gizmos.DrawLine(tri.a, tri.c);
+                            Gizmos.DrawLine(tri.b, tri.c);
+                            BVHNode n = currentNode;
+                            Gizmos.DrawWireCube(n.meshChunk.bounds.center, n.meshChunk.bounds.size);
+                            // while (n != null)
                             // {
-                            //     Gizmos.color = Color.red;
-                            //     Gizmos.DrawLine(tri.Q, tri.Q + tri.v);
-                            //     Gizmos.DrawLine(tri.Q, tri.Q + tri.u);
-                            //     Gizmos.DrawLine(tri.Q + tri.v, tri.Q + tri.u);
+                            //     Gizmos.DrawWireCube(n.meshChunk.bounds.center, n.meshChunk.bounds.size);
+                            //     n = n.parent;
                             // }
                         }
+                        // else
+                        // {
+                        //     Gizmos.color = Color.red;
+                        //     Gizmos.DrawLine(tri.Q, tri.Q + tri.v);
+                        //     Gizmos.DrawLine(tri.Q, tri.Q + tri.u);
+                        //     Gizmos.DrawLine(tri.Q + tri.v, tri.Q + tri.u);
+                        // }
                     }
                 }
+                // }
             }
         }
 

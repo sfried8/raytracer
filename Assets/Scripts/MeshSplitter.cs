@@ -13,12 +13,16 @@ public class Triangle
     private Vector3 n;
     private float D;
     private Vector3 w;
+    public Vector3 min;
+    public Vector3 max;
 
     public Triangle(Vector3 a, Vector3 b, Vector3 c)
     {
         this.a = a;
         this.b = b;
         this.c = c;
+        min = Vector3.Min(Vector3.Min(a, b), c);
+        max = Vector3.Max(Vector3.Max(a, b), c);
         this.center = (a + b + c) / 3.0f;
         u = b - a;
         v = c - a;
@@ -45,6 +49,7 @@ public class Triangle
 public static class MeshSplitter
 {
 
+    public static int numSplitsToTest = 5;
     private static (MeshChunk meshChunkA, MeshChunk meshChunkB) SplitOnce(MeshChunk startingMesh, int axis, float percentage)
     {
         float boundsCenterAxis = startingMesh.bounds.min[axis] + percentage * startingMesh.bounds.size[axis];
@@ -65,29 +70,17 @@ public static class MeshSplitter
             float triangleCenterAxis = triangle.center[axis];
             if (triangleCenterAxis < boundsCenterAxis)
             {
-                if (meshChunkA.triangles.Count == 0)
-                {
-                    meshChunkA.bounds = new Bounds(triangle.a, Vector3.one * 0.1f);
-                }
                 meshChunkA.triangles.Add(triangle);
-                meshChunkA.bounds.Encapsulate(triangle.a);
-                meshChunkA.bounds.Encapsulate(triangle.b);
-                meshChunkA.bounds.Encapsulate(triangle.c);
+                meshChunkA.bounds.Encapsulate(triangle);
             }
             else
             {
-                if (meshChunkB.triangles.Count == 0)
-                {
-                    meshChunkB.bounds = new Bounds(triangle.a, Vector3.one * 0.1f);
-                }
                 meshChunkB.triangles.Add(triangle);
-                meshChunkB.bounds.Encapsulate(triangle.a);
-                meshChunkB.bounds.Encapsulate(triangle.b);
-                meshChunkB.bounds.Encapsulate(triangle.c);
+                meshChunkB.bounds.Encapsulate(triangle);
             }
         }
-        meshChunkA.bounds = new Bounds(meshChunkA.bounds.center, meshChunkA.bounds.size * 1.05f);
-        meshChunkB.bounds = new Bounds(meshChunkB.bounds.center, meshChunkB.bounds.size * 1.05f);
+        // meshChunkA.bounds = new Bounds(meshChunkA.bounds.center, meshChunkA.bounds.size * 1.05f);
+        // meshChunkB.bounds = new Bounds(meshChunkB.bounds.center, meshChunkB.bounds.size * 1.05f);
 
         return (meshChunkA, meshChunkB);
     }
@@ -151,13 +144,17 @@ public static class MeshSplitter
         float bestCost = 1e30f;
         for (int i = 0; i < 3; i++)
         {
-            (var splitA, var splitB) = SplitOnce(fullMesh, i, 0.5f);
-            var splitCost = Cost(splitA) + Cost(splitB);
-            if (splitCost < bestCost)
+            for (int j = 0; j < numSplitsToTest; j++)
             {
-                bestCost = splitCost;
-                bestSplitA = splitA;
-                bestSplitB = splitB;
+
+                (var splitA, var splitB) = SplitOnce(fullMesh, i, 1.0f / (numSplitsToTest + 1) * (j + 1));
+                var splitCost = Cost(splitA) + Cost(splitB);
+                if (splitCost < bestCost)
+                {
+                    bestCost = splitCost;
+                    bestSplitA = splitA;
+                    bestSplitB = splitB;
+                }
             }
         }
         return (bestSplitA, bestSplitB, bestCost);

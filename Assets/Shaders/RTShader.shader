@@ -268,38 +268,35 @@ Shader "Custom/RTShader"
                     int nodeIndex = stack[--stackIndex];
                     BVHNode node = BVHNodes[nodeIndex];
                     stats[0]++;
-                    if (hit_aabb(node.boundsMin, node.boundsMax, r) < closestHit.dist) {
-                        if (node.numTriangles > 0) {
-                            HitInfo hit = (HitInfo)0;
-                            for (int i = 0; i < node.numTriangles; i++) {
-                                Triangle tri = Triangles[node.index + i];
-                                stats[1]++;
-                                hit = hit_triangle(tri, r);
-                                if (hit.did_hit && hit.dist < closestHit.dist) {
-                                    closestHit = hit;
-                                    closestHit.material = meshInfo.material;
-                                }
+                    if (node.numTriangles > 0) {
+                        HitInfo hit = (HitInfo)0;
+                        for (int i = 0; i < node.numTriangles; i++) {
+                            Triangle tri = Triangles[node.index + i];
+                            stats[1]++;
+                            hit = hit_triangle(tri, r);
+                            if (hit.did_hit && hit.dist < closestHit.dist) {
+                                closestHit = hit;
+                                closestHit.material = meshInfo.material;
                             }
-                            } else {
-                            stats[0] += 2;
-                            BVHNode childA = BVHNodes[node.index];
-                            BVHNode childB = BVHNodes[node.index + 1];
-                            float dstA = hit_aabb(childA.boundsMin, childA.boundsMax, r);
-                            float dstB = hit_aabb(childB.boundsMin, childB.boundsMax, r);
-                            if (dstA < closestHit.dist) {
-                                if (dstB < closestHit.dist) {
-                                    int closerIndex = dstA < dstB ? node.index : node.index + 1;
-                                    int fartherIndex = dstA >= dstB ? node.index : node.index + 1;
-                                    stack[stackIndex++] = fartherIndex;
-                                    stack[stackIndex++] = closerIndex;
-                                    
-                                    } else {
-                                    stack[stackIndex++] = node.index;
-                                }
-                                } else if (dstB < closestHit.dist) {
-                                stack[stackIndex++] = node.index + 1;
+                        }
+                    } else {
+                        stats[0] += 2;
+                        BVHNode childA = BVHNodes[node.index];
+                        BVHNode childB = BVHNodes[node.index + 1];
+                        float dstA = hit_aabb(childA.boundsMin, childA.boundsMax, r);
+                        float dstB = hit_aabb(childB.boundsMin, childB.boundsMax, r);
+                        if (dstA < closestHit.dist) {
+                            if (dstB < closestHit.dist) {
+                                int closerIndex = dstA < dstB ? node.index : node.index + 1;
+                                int fartherIndex = dstA >= dstB ? node.index : node.index + 1;
+                                stack[stackIndex++] = fartherIndex;
+                                stack[stackIndex++] = closerIndex;
                                 
+                            } else {
+                                stack[stackIndex++] = node.index;
                             }
+                        } else if (dstB < closestHit.dist) {
+                            stack[stackIndex++] = node.index + 1;
                         }
                     }
                 }
@@ -435,7 +432,7 @@ Shader "Custom/RTShader"
                         float rir = closestHit.front_face ? (previousRefractiveIndex/closestHit.material.refractive_index) : (closestHit.material.refractive_index/previousRefractiveIndex);
                         scatterDir = refract(r.direction, closestHit.normal, rir, rng);
                         previousRefractiveIndex = closestHit.material.refractive_index;
-                        } else {
+                    } else {
                         scatterDir = closestHit.normal + RandomPointInSphere(rng);
                         if(dot(closestHit.normal, scatterDir) < 0.0) {
                             scatterDir = -scatterDir;
@@ -456,7 +453,7 @@ Shader "Custom/RTShader"
             float4 displayFloat(float f) {
                 if (f > 1.0) {
                     return float4(1,0,0,1);
-                    } else if (f < 0.0) {
+                } else if (f < 0.0) {
                     return float4(0,1,0,1);
                 }
                 return float4(f,f,f,1);

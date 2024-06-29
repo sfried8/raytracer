@@ -21,9 +21,7 @@ public struct RTMaterial
 
 	public MaterialFlag flag;
 	public Color checkerColor2;
-	public float checkerScale;
-	[HideInInspector]
-	public float invCheckerScale;
+	[Range(0, 1)] public float invCheckerScale;
 
 	public void SetDefaultValues()
 	{
@@ -33,9 +31,5 @@ public struct RTMaterial
 		specularColor = Color.white;
 		smoothness = 0;
 		specularProbability = 1;
-	}
-	public void SetInverseCheckerScale()
-	{
-		invCheckerScale = 1.0f / checkerScale;
 	}
 }

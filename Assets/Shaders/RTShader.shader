@@ -60,7 +60,6 @@ Shader "Custom/RTShader"
                 float refractive_index;
                 int flag;
                 float4 checkerColor2;
-                float checkerScale;
                 float invCheckerScale;
             };
 
@@ -197,7 +196,7 @@ Shader "Custom/RTShader"
                 if (discriminant < 0.0) 
                 {
                     hit.did_hit = false;
-                    } else {
+                } else {
                     hit.dist = (-b - sqrt(discriminant))/(2.0*a); 
                     if (hit.dist >= 0.0001) {
 
@@ -207,7 +206,7 @@ Shader "Custom/RTShader"
                         if (dot(r.direction, hit.normal) > 0.0) {
                             hit.normal = -hit.normal;
                             hit.front_face = false;
-                            } else {
+                        } else {
                             hit.front_face = true;
                         }
                     }
@@ -225,7 +224,7 @@ Shader "Custom/RTShader"
                 if (t < 0.001)
                 {
                     hit.did_hit = false;
-                    } else {
+                } else {
                     float3 intersection = at(r, t);
                     float3 planar_hitpt_vector = intersection - tri.Q;
                     float alpha = dot(tri.w, cross(planar_hitpt_vector, tri.v));
@@ -238,7 +237,7 @@ Shader "Custom/RTShader"
                         if (denom > 0.0) {
                             hit.normal = -hit.normal;
                             hit.front_face = false;
-                            } else {
+                        } else {
                             hit.front_face = true;
                         }
                     }

@@ -35,16 +35,16 @@ public static class BVH
         {
             BVHNodeStruct nodeStruct = new()
             {
-                childAIndex = 0,
+                index = 0,
             };
             if (node.childA != null)
             {
-                nodeStruct.childAIndex = node.childA.index;
+                nodeStruct.index = node.childA.index;
             }
             if (node.isLeaf)
             {
                 nodeStruct.numTriangles = node.meshChunk.triangles.Count;
-                nodeStruct.triangleStartIndex = triangles.Count + triangleStartIndex;
+                nodeStruct.index = triangles.Count + triangleStartIndex;
                 triangles.AddRange(node.meshChunk.triangles.Select((triangle) => triangle.ToStruct()));
             }
             nodeStruct.boundsMin = node.meshChunk.bounds.min;

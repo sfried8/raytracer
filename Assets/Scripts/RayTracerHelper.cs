@@ -35,7 +35,7 @@ public class RTObjectCounts
 {
 	public int triangles;
 	public int bvhNodes;
-	public int bvhParents;
+	public int meshes;
 }
 [ExecuteAlways, ImageEffectAllowedInSceneView]
 public class RayTracerHelper : MonoBehaviour
@@ -77,7 +77,7 @@ public class RayTracerHelper : MonoBehaviour
 	ComputeBuffer sphereBuffer;
 	ComputeBuffer triangleBuffer;
 	ComputeBuffer bvhNodeBuffer;
-	ComputeBuffer bvhParentBuffer;
+	ComputeBuffer meshInfoBuffer;
 
 	public List<TriangleStruct> allTriangles;
 
@@ -88,7 +88,7 @@ public class RayTracerHelper : MonoBehaviour
 	private bool shouldSaveScreenshot = false;
 	public List<BVHNodeStruct> allBVHInfo;
 	public List<BVHNode> allBVHParentObjects;
-	public List<int> allBvhParents;
+	public List<MeshInfoStruct> allMeshes;
 	string snapshotDirectory;
 	int snapshotFrame;
 	[Header("References")]
@@ -264,10 +264,10 @@ public class RayTracerHelper : MonoBehaviour
 		allTriangles ??= new List<TriangleStruct>();
 		allBVHInfo ??= new List<BVHNodeStruct>();
 		allBVHParentObjects ??= new();
-		allBvhParents ??= new List<int>();
+		allMeshes ??= new List<MeshInfoStruct>();
 		allTriangles.Clear();
 		allBVHInfo.Clear();
-		allBvhParents.Clear();
+		allMeshes.Clear();
 		allBVHParentObjects.Clear();
 
 		for (int i = 0; i < meshObjects.Length; i++)
@@ -281,6 +281,12 @@ public class RayTracerHelper : MonoBehaviour
 			for (int subMeshIndex = 0; subMeshIndex < mesh.subMeshCount; subMeshIndex++)
 			{
 
+				MeshInfoStruct meshInfo = new()
+				{
+					bvhNode = 0,
+					material = mo.materials[subMeshIndex],
+					worldToLocalMatrix = mo.transform.worldToLocalMatrix
+				};
 				SubMeshDescriptor subMeshDescriptor = mesh.GetSubMesh(subMeshIndex);
 				MeshChunk meshChunk = new MeshChunk()
 				{
@@ -293,7 +299,6 @@ public class RayTracerHelper : MonoBehaviour
 
 				int numTriangles = subMeshDescriptor.indexCount / 3;
 				int subMeshDescriptorIndexStart = subMeshDescriptor.indexStart;
-				Triangle[] meshChunkTris = new Triangle[numTriangles];
 				Vector3[] meshVerts = mesh.vertices;
 				int[] meshTris = mesh.triangles;
 				Vector3 moPosition = mo.transform.position;
@@ -323,11 +328,10 @@ public class RayTracerHelper : MonoBehaviour
 				for (int i1 = 0; i1 < bvhNodes.Count; i1++)
 				{
 					BVHNodeStruct bVHNodeStruct = bvhNodes[i1];
-					bVHNodeStruct.material = mo.materials[subMeshIndex];//
-					bVHNodeStruct.material.SetInverseCheckerScale();
 					if (i1 == 0)
 					{
-						allBvhParents.Add(allBVHInfo.Count);
+						meshInfo.bvhNode = allBVHInfo.Count;
+						allMeshes.Add(meshInfo);
 					}
 					allBVHInfo.Add(bVHNodeStruct);
 				}
@@ -341,19 +345,19 @@ public class RayTracerHelper : MonoBehaviour
 		// numMeshChunks = allBVHInfo.Count;
 		ShaderHelper.CreateStructuredBuffer(ref triangleBuffer, allTriangles);
 		ShaderHelper.CreateStructuredBuffer(ref bvhNodeBuffer, allBVHInfo);
-		ShaderHelper.CreateStructuredBuffer(ref bvhParentBuffer, allBvhParents);
+		ShaderHelper.CreateStructuredBuffer(ref meshInfoBuffer, allMeshes);
 		rayTracingMaterial.SetBuffer("Triangles", triangleBuffer);
 		rayTracingMaterial.SetInt("NumTriangles", allTriangles.Count);
 
 		rayTracingMaterial.SetBuffer("BVHNodes", bvhNodeBuffer);
 		rayTracingMaterial.SetInt("NumBVHNodes", allBVHInfo.Count);
 
-		rayTracingMaterial.SetBuffer("BVHParentIndices", bvhParentBuffer);
-		rayTracingMaterial.SetInt("NumBVHParents", allBvhParents.Count);
+		rayTracingMaterial.SetBuffer("Meshes", meshInfoBuffer);
+		rayTracingMaterial.SetInt("NumMeshes", allMeshes.Count);
 
 		objectCounts.triangles = allTriangles.Count;
 		objectCounts.bvhNodes = allBVHInfo.Count;
-		objectCounts.bvhParents = allBvhParents.Count;
+		objectCounts.meshes = allMeshes.Count;
 	}
 
 
@@ -386,7 +390,7 @@ public class RayTracerHelper : MonoBehaviour
 
 	void OnDisable()
 	{
-		ShaderHelper.Release(sphereBuffer, triangleBuffer, bvhNodeBuffer, bvhParentBuffer);
+		ShaderHelper.Release(sphereBuffer, triangleBuffer, bvhNodeBuffer, meshInfoBuffer);
 		ShaderHelper.Release(resultTexture);
 	}
 

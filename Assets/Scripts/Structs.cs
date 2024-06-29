@@ -27,13 +27,17 @@ public struct MeshChunk
     public string name;
 }
 
+public struct MeshInfoStruct
+{
+    public int bvhNode;
+    public Matrix4x4 worldToLocalMatrix;
+    public RTMaterial material;
+}
 public struct BVHNodeStruct
 {
     public Vector3 boundsMin;
     public Vector3 boundsMax;
-    public int childAIndex;
-    public int triangleStartIndex;
+    public int index;
     public int numTriangles;
-    public RTMaterial material;
 
 }

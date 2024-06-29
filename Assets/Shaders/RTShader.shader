@@ -92,10 +92,8 @@ Shader "Custom/RTShader"
             };
             struct MeshInfo
             {
-                int numTriangles;
-                int triangleStartIndex;
-                float3 boundsMin;
-                float3 boundsMax;
+                int bvhNode;
+                float4x4 worldToLocalMatrix;
                 RTMaterial material;
             };
             struct MeshParent
@@ -105,14 +103,12 @@ Shader "Custom/RTShader"
                 float3 boundsMin;
                 float3 boundsMax;
             };
-            struct BVHNodeStruct
+            struct BVHNode
             {
                 float3 boundsMin;
                 float3 boundsMax;
-                int childAIndex;
-                int triangleStartIndex;
+                int index;
                 int numTriangles;
-                RTMaterial material;
             };
 
             /////////////////
@@ -125,19 +121,15 @@ Shader "Custom/RTShader"
             StructuredBuffer<Sphere> Spheres;
             StructuredBuffer<Triangle> Triangles;
             StructuredBuffer<MeshInfo> Meshes;
-            StructuredBuffer<BVHNodeStruct> BVHNodes;
-            StructuredBuffer<MeshParent> MeshParents;
-            StructuredBuffer<int> BVHParentIndices;
+            StructuredBuffer<BVHNode> BVHNodes;
             int Frame;
             int NumSpheres;
             int NumTriangles;
-            int NumMeshParents;
-            int NumBVHNodes;
+            int NumMeshes;
             int MaxBounces;
             int RaysPerPixel;
             int BoxTestCap;
             int TriangleTestCap;
-            int NumBVHParents;
 
             int DebugDisplayMode;
 
@@ -265,93 +257,47 @@ Shader "Custom/RTShader"
                 return hit ? tNear : 1.#INF;
             }
 
-            HitInfo hit_mesh(MeshInfo mesh, Ray r, inout int2 stats) {
-                HitInfo closestHit = (HitInfo)0;
-                closestHit.dist = 1.#INF;
-                closestHit.material = mesh.material;
-                stats[0]++;
-                if (!hit_aabb(mesh.boundsMin, mesh.boundsMax, r)) {
-                    // closestHit.err = true;
-                    return closestHit;
-                }
-                HitInfo hit = (HitInfo)0;
-                for (int i = 0; i < mesh.numTriangles; i++) {
-                    Triangle tri = Triangles[mesh.triangleStartIndex + i];
-                    stats[1]++;
-                    hit = hit_triangle(tri, r);
-                    if (hit.did_hit) {
-                        if (hit.dist < closestHit.dist) {
-                            closestHit = hit;
-                            closestHit.material = mesh.material;
-                        }
-                    }
-                }
-                return closestHit;
-            }
-
-            HitInfo hit_mesh_parent(MeshParent meshParent, Ray r, inout int2 stats) {
-                HitInfo closestHit = (HitInfo)0;
-                closestHit.dist = 1.#INF;
-                stats[0]++;
-                if (!hit_aabb(meshParent.boundsMin, meshParent.boundsMax, r)) {
-                    // closestHit.err = true;
-                    return closestHit;
-                }
-                HitInfo hit = (HitInfo)0;
-                for (int i = 0; i < meshParent.numMeshes; i++) {
-                    MeshInfo mesh = Meshes[meshParent.meshStartIndex + i];
-                    hit = hit_mesh(mesh, r, stats);
-                    if (hit.did_hit) {
-                        if (hit.dist < closestHit.dist) {
-                            closestHit = hit;
-                        }
-                    }
-                }
-                return closestHit;
-                
-            }
-
-            HitInfo hit_bvh_node(int bvhNodeIndex, Ray r, inout int2 stats) {
+            HitInfo hit_bvh_node(MeshInfo meshInfo, Ray r, inout int2 stats) {
                 int stack[32];
-                stack[0] = bvhNodeIndex;
+                stack[0] = meshInfo.bvhNode;
                 int stackIndex = 1;
                 //int safetyLimit = 100;
                 HitInfo closestHit = (HitInfo)0;
                 closestHit.dist = 1.#INF;
                 while (stackIndex > 0) {
                     int nodeIndex = stack[--stackIndex];
-                    BVHNodeStruct node = BVHNodes[nodeIndex];
+                    BVHNode node = BVHNodes[nodeIndex];
                     stats[0]++;
                     if (hit_aabb(node.boundsMin, node.boundsMax, r) < closestHit.dist) {
-                        if (node.childAIndex == 0) {
+                        if (node.numTriangles > 0) {
                             HitInfo hit = (HitInfo)0;
                             for (int i = 0; i < node.numTriangles; i++) {
-                                Triangle tri = Triangles[node.triangleStartIndex + i];
+                                Triangle tri = Triangles[node.index + i];
                                 stats[1]++;
                                 hit = hit_triangle(tri, r);
                                 if (hit.did_hit && hit.dist < closestHit.dist) {
                                     closestHit = hit;
-                                    closestHit.material = node.material;
+                                    closestHit.material = meshInfo.material;
                                 }
                             }
                             } else {
                             stats[0] += 2;
-                            BVHNodeStruct childA = BVHNodes[node.childAIndex];
-                            BVHNodeStruct childB = BVHNodes[node.childAIndex + 1];
+                            BVHNode childA = BVHNodes[node.index];
+                            BVHNode childB = BVHNodes[node.index + 1];
                             float dstA = hit_aabb(childA.boundsMin, childA.boundsMax, r);
                             float dstB = hit_aabb(childB.boundsMin, childB.boundsMax, r);
                             if (dstA < closestHit.dist) {
                                 if (dstB < closestHit.dist) {
-                                    int closerIndex = dstA < dstB ? node.childAIndex : node.childAIndex + 1;
-                                    int fartherIndex = dstA >= dstB ? node.childAIndex : node.childAIndex + 1;
+                                    int closerIndex = dstA < dstB ? node.index : node.index + 1;
+                                    int fartherIndex = dstA >= dstB ? node.index : node.index + 1;
                                     stack[stackIndex++] = fartherIndex;
                                     stack[stackIndex++] = closerIndex;
                                     
                                     } else {
-                                    stack[stackIndex++] = node.childAIndex;
+                                    stack[stackIndex++] = node.index;
                                 }
                                 } else if (dstB < closestHit.dist) {
-                                stack[stackIndex++] = node.childAIndex + 1;
+                                stack[stackIndex++] = node.index + 1;
                                 
                             }
                         }
@@ -435,9 +381,9 @@ Shader "Custom/RTShader"
                             //         }
                         //     }
                     // }
-                    for (int i0 = 0; i0 < NumBVHParents; i0++) {
+                    for (int i0 = 0; i0 < NumMeshes; i0++) {
                         
-                        HitInfo hit = hit_bvh_node(BVHParentIndices[i0], r, stats);
+                        HitInfo hit = hit_bvh_node(Meshes[i0], r, stats);
                         if (hit.did_hit && hit.dist < closestHit.dist)  {
                             closestHit = hit;
                         }

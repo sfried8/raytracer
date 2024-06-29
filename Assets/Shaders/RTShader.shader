@@ -260,7 +260,6 @@ Shader "Custom/RTShader"
                 int stack[32];
                 stack[0] = meshInfo.bvhNode;
                 int stackIndex = 1;
-                //int safetyLimit = 100;
                 HitInfo closestHit = (HitInfo)0;
                 closestHit.dist = 1.#INF;
                 while (stackIndex > 0) {
@@ -365,32 +364,17 @@ Shader "Custom/RTShader"
                             }
                         }
                     }
-                    // for (int i = 0; i < NumMeshParents; i++){
-                        //     MeshParent meshParent = MeshParents[i];
-                        //     HitInfo hit = hit_mesh_parent(meshParent, r);
-                        //     if (hit.err) {
-                            //         return float4(1,0,0,1);
-                        //     }
-                        //     if (hit.did_hit) {
-                            //         if (hit.dist < closestHit.dist) {
-                                //             closestHit = hit;
-                            //         }
-                        //     }
-                    // }
                     for (int i0 = 0; i0 < NumMeshes; i0++) {
                         
                         HitInfo hit = hit_bvh_node(Meshes[i0], r, stats);
+                        
                         if (hit.did_hit && hit.dist < closestHit.dist)  {
                             closestHit = hit;
                         }
                         
                     }
                     if (!closestHit.did_hit) { 
-                        // if (bounce == 0) {
-                            light += currentRayColor * float3(0,0.14,0.74);
-                            // } else {
-                            // light += currentRayColor;
-                        // }
+                        light += currentRayColor * float3(0,0.14,0.74);
                         break;
                     }
                     if (DebugDisplayMode == DEBUG_NORMALS) {

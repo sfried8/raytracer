@@ -93,6 +93,7 @@ Shader "Custom/RTShader"
             {
                 int bvhNode;
                 float4x4 worldToLocalMatrix;
+                float4x4 localToWorldMatrix;
                 RTMaterial material;
             };
             struct MeshParent
@@ -365,11 +366,19 @@ Shader "Custom/RTShader"
                         }
                     }
                     for (int i0 = 0; i0 < NumMeshes; i0++) {
-                        
-                        HitInfo hit = hit_bvh_node(Meshes[i0], r, stats);
+                        Ray famous_unoriginal_ray;
+                        MeshInfo meshInfo = Meshes[i0];
+                famous_unoriginal_ray.origin = mul(meshInfo.worldToLocalMatrix, float4(r.origin, 1));
+                famous_unoriginal_ray.direction = mul(meshInfo.worldToLocalMatrix, float4(r.direction, 0));
+                famous_unoriginal_ray.inverseDirection = 1 / famous_unoriginal_ray.direction;
+                        HitInfo hit = hit_bvh_node(meshInfo, famous_unoriginal_ray, stats);
                         
                         if (hit.did_hit && hit.dist < closestHit.dist)  {
-                            closestHit = hit;
+                            closestHit.did_hit = true;
+                            closestHit.dist = hit.dist;
+                            closestHit.normal = normalize(mul(meshInfo.localToWorldMatrix, float4(hit.normal, 0)));
+                            closestHit.hit_point = r.origin + r.direction * hit.dist;
+                            closestHit.material = meshInfo.material;
                         }
                         
                     }

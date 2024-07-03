@@ -31,6 +31,7 @@ public struct MeshInfoStruct
 {
     public int bvhNode;
     public Matrix4x4 worldToLocalMatrix;
+    public Matrix4x4 localToWorldMatrix;
     public RTMaterial material;
 }
 public struct BVHNodeStruct

@@ -285,7 +285,8 @@ public class RayTracerHelper : MonoBehaviour
 				{
 					bvhNode = 0,
 					material = mo.materials[subMeshIndex],
-					worldToLocalMatrix = mo.transform.worldToLocalMatrix
+					worldToLocalMatrix = mo.transform.worldToLocalMatrix,
+					localToWorldMatrix = mo.transform.localToWorldMatrix
 				};
 				SubMeshDescriptor subMeshDescriptor = mesh.GetSubMesh(subMeshIndex);
 				MeshChunk meshChunk = new MeshChunk()
@@ -308,11 +309,12 @@ public class RayTracerHelper : MonoBehaviour
 				for (int triangleVertex = 0; triangleVertex < numTriangles; triangleVertex++)
 				{
 
-					Vector3 a = matchTransform(meshVerts[meshTris[subMeshDescriptorIndexStart + 3 * triangleVertex + 0]], moPosition, moRotation, moScale);
-					Vector3 b = matchTransform(meshVerts[meshTris[subMeshDescriptorIndexStart + 3 * triangleVertex + 1]], moPosition, moRotation, moScale);
-					Vector3 c = matchTransform(meshVerts[meshTris[subMeshDescriptorIndexStart + 3 * triangleVertex + 2]], moPosition, moRotation, moScale);
+					Vector3 a = meshVerts[meshTris[subMeshDescriptorIndexStart + 3 * triangleVertex + 0]];
+					Vector3 b = meshVerts[meshTris[subMeshDescriptorIndexStart + 3 * triangleVertex + 1]];
+					Vector3 c = meshVerts[meshTris[subMeshDescriptorIndexStart + 3 * triangleVertex + 2]];
 					Triangle t = new Triangle(a, b, c);
-					meshChunk.bounds.Encapsulate(t);
+					meshChunk.bounds.Encapsulate(t.min, t.max);
+
 					meshChunk.triangles.Add(t);
 					// allTriangles.Add(triangle);
 				}

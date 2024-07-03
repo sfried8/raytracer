@@ -71,12 +71,12 @@ public static class MeshSplitter
             if (triangleCenterAxis < boundsCenterAxis)
             {
                 meshChunkA.triangles.Add(triangle);
-                meshChunkA.bounds.Encapsulate(triangle);
+                meshChunkA.bounds.Encapsulate(triangle.min, triangle.max);
             }
             else
             {
                 meshChunkB.triangles.Add(triangle);
-                meshChunkB.bounds.Encapsulate(triangle);
+                meshChunkB.bounds.Encapsulate(triangle.min, triangle.max);
             }
         }
         // meshChunkA.bounds = new Bounds(meshChunkA.bounds.center, meshChunkA.bounds.size * 1.05f);

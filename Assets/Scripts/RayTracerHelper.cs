@@ -89,6 +89,7 @@ public class RayTracerHelper : MonoBehaviour
 	public List<BVHNodeStruct> allBVHInfo;
 	public List<BVHNode> allBVHParentObjects;
 	public List<MeshInfoStruct> allMeshes;
+	public Dictionary<(Mesh, int), int> meshToBVHNodeIndex;
 	string snapshotDirectory;
 	int snapshotFrame;
 	[Header("References")]
@@ -257,6 +258,61 @@ public class RayTracerHelper : MonoBehaviour
 	{
 		return position + rotation * Vector3.Scale(localVec, localScale);
 	}
+	public int CreateBVHForMesh(Mesh mesh, int subMeshIndex)
+	{
+		MeshChunk meshChunk = new MeshChunk()
+		{
+			triangles = new(),
+			bounds = new(),
+		};
+
+		// ...
+		SubMeshDescriptor subMeshDescriptor = mesh.GetSubMesh(subMeshIndex);
+
+		int numTriangles = subMeshDescriptor.indexCount / 3;
+		int subMeshDescriptorIndexStart = subMeshDescriptor.indexStart;
+		Vector3[] meshVerts = mesh.vertices;
+		int[] meshTris = mesh.triangles;
+		var sw = System.Diagnostics.Stopwatch.StartNew();
+		for (int triangleVertex = 0; triangleVertex < numTriangles; triangleVertex++)
+		{
+
+			Vector3 a = meshVerts[meshTris[subMeshDescriptorIndexStart + 3 * triangleVertex + 0]];
+			Vector3 b = meshVerts[meshTris[subMeshDescriptorIndexStart + 3 * triangleVertex + 1]];
+			Vector3 c = meshVerts[meshTris[subMeshDescriptorIndexStart + 3 * triangleVertex + 2]];
+			Triangle t = new Triangle(a, b, c);
+			meshChunk.bounds.Encapsulate(t.min, t.max);
+
+			meshChunk.triangles.Add(t);
+			// allTriangles.Add(triangle);
+		}
+		sw.Stop();
+		Debug.Log($"Populating mesh chunk took {sw.Elapsed}");
+		sw.Restart();
+		// int depthLimit = (int)Clamp(Log(Pow(meshChunk.triangles.Count / 0.3f, 1.9f)) - 6.4f, 1, 20);
+		// Debug.Log($"{mo.gameObject.name}: {meshChunk.triangles.Count} triangles, depth {depthLimit}");
+		MeshSplitter.numSplitsToTest = bvhNumSplits;
+		(List<BVHNodeStruct> bvhNodes, List<TriangleStruct> triangles, BVHNode parent) = BVH.CreateBVH(meshChunk, allBVHInfo.Count, allTriangles.Count, bvhDepthLimit);
+		allBVHParentObjects.Add(parent);
+		int bvhNodeIndex = allBVHInfo.Count;
+		allBVHInfo.AddRange(bvhNodes);
+		sw.Stop();
+		Debug.Log($"creating bvh took {sw.Elapsed}");
+		allTriangles.AddRange(triangles);
+		return bvhNodeIndex;
+	}
+	public int GetBVHNodeIndexForMesh(Mesh mesh, int subMeshIndex)
+	{
+		if (!meshToBVHNodeIndex.ContainsKey((mesh, subMeshIndex)))
+		{
+			Debug.Log($"Don't have bvh node, creating");
+			int newMeshBVHIndex = CreateBVHForMesh(mesh, subMeshIndex);
+			meshToBVHNodeIndex[(mesh, subMeshIndex)] = newMeshBVHIndex;
+			return newMeshBVHIndex;
+		}
+		Debug.Log($"Reusing bvh node!");
+		return meshToBVHNodeIndex[(mesh, subMeshIndex)];
+	}
 	public void CreateMeshes()
 	{
 		RTMesh[] meshObjects = FindObjectsOfType<RTMesh>();
@@ -265,6 +321,7 @@ public class RayTracerHelper : MonoBehaviour
 		allBVHInfo ??= new List<BVHNodeStruct>();
 		allBVHParentObjects ??= new();
 		allMeshes ??= new List<MeshInfoStruct>();
+		meshToBVHNodeIndex ??= new();
 		allTriangles.Clear();
 		allBVHInfo.Clear();
 		allMeshes.Clear();
@@ -281,65 +338,15 @@ public class RayTracerHelper : MonoBehaviour
 			for (int subMeshIndex = 0; subMeshIndex < mesh.subMeshCount; subMeshIndex++)
 			{
 
+
 				MeshInfoStruct meshInfo = new()
 				{
-					bvhNode = 0,
+					bvhNode = GetBVHNodeIndexForMesh(mesh, subMeshIndex),
 					material = mo.materials[subMeshIndex],
 					worldToLocalMatrix = mo.transform.worldToLocalMatrix,
 					localToWorldMatrix = mo.transform.localToWorldMatrix
 				};
-				SubMeshDescriptor subMeshDescriptor = mesh.GetSubMesh(subMeshIndex);
-				MeshChunk meshChunk = new MeshChunk()
-				{
-					triangles = new(),
-					bounds = new(),
-					name = mo.gameObject.name
-				};
-
-				// ...
-
-				int numTriangles = subMeshDescriptor.indexCount / 3;
-				int subMeshDescriptorIndexStart = subMeshDescriptor.indexStart;
-				Vector3[] meshVerts = mesh.vertices;
-				int[] meshTris = mesh.triangles;
-				Vector3 moPosition = mo.transform.position;
-				Vector3 moScale = mo.transform.localScale;
-				UnityEngine.Quaternion moRotation = mo.transform.rotation;
-				var sw = System.Diagnostics.Stopwatch.StartNew();
-				for (int triangleVertex = 0; triangleVertex < numTriangles; triangleVertex++)
-				{
-
-					Vector3 a = meshVerts[meshTris[subMeshDescriptorIndexStart + 3 * triangleVertex + 0]];
-					Vector3 b = meshVerts[meshTris[subMeshDescriptorIndexStart + 3 * triangleVertex + 1]];
-					Vector3 c = meshVerts[meshTris[subMeshDescriptorIndexStart + 3 * triangleVertex + 2]];
-					Triangle t = new Triangle(a, b, c);
-					meshChunk.bounds.Encapsulate(t.min, t.max);
-
-					meshChunk.triangles.Add(t);
-					// allTriangles.Add(triangle);
-				}
-				sw.Stop();
-				Debug.Log($"Populating mesh chunk took {sw.Elapsed}");
-				sw.Restart();
-				// int depthLimit = (int)Clamp(Log(Pow(meshChunk.triangles.Count / 0.3f, 1.9f)) - 6.4f, 1, 20);
-				// Debug.Log($"{mo.gameObject.name}: {meshChunk.triangles.Count} triangles, depth {depthLimit}");
-				MeshSplitter.numSplitsToTest = bvhNumSplits;
-				(List<BVHNodeStruct> bvhNodes, List<TriangleStruct> triangles, BVHNode parent) = BVH.CreateBVH(meshChunk, allBVHInfo.Count, allTriangles.Count, bvhDepthLimit);
-				mo.SetBVHNode(parent);
-				allBVHParentObjects.Add(parent);
-				for (int i1 = 0; i1 < bvhNodes.Count; i1++)
-				{
-					BVHNodeStruct bVHNodeStruct = bvhNodes[i1];
-					if (i1 == 0)
-					{
-						meshInfo.bvhNode = allBVHInfo.Count;
-						allMeshes.Add(meshInfo);
-					}
-					allBVHInfo.Add(bVHNodeStruct);
-				}
-				sw.Stop();
-				Debug.Log($"creating bvh took {sw.Elapsed}");
-				allTriangles.AddRange(triangles);
+				allMeshes.Add(meshInfo);
 			}
 
 		}

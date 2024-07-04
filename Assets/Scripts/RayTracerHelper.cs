@@ -103,6 +103,8 @@ public class RayTracerHelper : MonoBehaviour
 		shouldAccumulate = true;
 		snapshotDirectory = "C://Users/Sam/Documents/bananas/" + DateTime.UtcNow.ToFileTimeUtc();
 		snapshotFrame = 0;
+
+		meshToBVHNodeIndex ??= new();
 	}
 
 	void TakeSnapshot()
@@ -212,21 +214,38 @@ public class RayTracerHelper : MonoBehaviour
 
 		// Update data
 		UpdateCameraParams(Camera.current);
+		allTriangles ??= new List<TriangleStruct>();
+		allBVHInfo ??= new List<BVHNodeStruct>();
+		allBVHParentObjects ??= new();
+		allMeshes ??= new List<MeshInfoStruct>();
+		CreateMeshes();
 		if (!initialized)
 		{
-			CreateMeshes();
+			createBuffersAndSend();
 			CreateSpheres();
 			initialized = true;
 			shouldReinitialize = false;
 		}
-		SetShaderParams(isGameCam);
+		SetShaderParams();
 
 	}
 
-	void SetShaderParams(bool isGameCam)
+	void createBuffersAndSend()
+	{
+		ShaderHelper.CreateStructuredBuffer(ref triangleBuffer, allTriangles);
+		ShaderHelper.CreateStructuredBuffer(ref bvhNodeBuffer, allBVHInfo);
+		rayTracingMaterial.SetBuffer("Triangles", triangleBuffer);
+		rayTracingMaterial.SetInt("NumTriangles", allTriangles.Count);
+
+		rayTracingMaterial.SetBuffer("BVHNodes", bvhNodeBuffer);
+		rayTracingMaterial.SetInt("NumBVHNodes", allBVHInfo.Count);
+
+
+	}
+	void SetShaderParams()
 	{
 		rayTracingMaterial.SetInt("MaxBounces", maxBounceCount);
-		rayTracingMaterial.SetInt("RaysPerPixel", isGameCam ? numRaysPerPixel : Min(numRaysPerPixel, 2));
+		rayTracingMaterial.SetInt("RaysPerPixel", numRaysPerPixel);
 		rayTracingMaterial.SetFloat("DefocusStrength", defocusStrength);
 		rayTracingMaterial.SetFloat("DivergeStrength", divergeStrength);
 		rayTracingMaterial.SetInt("DebugDisplayMode", (int)debugSettings.debugDisplayMode);
@@ -299,6 +318,7 @@ public class RayTracerHelper : MonoBehaviour
 		sw.Stop();
 		Debug.Log($"creating bvh took {sw.Elapsed}");
 		allTriangles.AddRange(triangles);
+		initialized = false;
 		return bvhNodeIndex;
 	}
 	public int GetBVHNodeIndexForMesh(Mesh mesh, int subMeshIndex)
@@ -317,15 +337,7 @@ public class RayTracerHelper : MonoBehaviour
 	{
 		RTMesh[] meshObjects = FindObjectsOfType<RTMesh>();
 
-		allTriangles ??= new List<TriangleStruct>();
-		allBVHInfo ??= new List<BVHNodeStruct>();
-		allBVHParentObjects ??= new();
-		allMeshes ??= new List<MeshInfoStruct>();
-		meshToBVHNodeIndex ??= new();
-		allTriangles.Clear();
-		allBVHInfo.Clear();
 		allMeshes.Clear();
-		allBVHParentObjects.Clear();
 
 		for (int i = 0; i < meshObjects.Length; i++)
 		{
@@ -350,17 +362,9 @@ public class RayTracerHelper : MonoBehaviour
 			}
 
 		}
+		ShaderHelper.CreateStructuredBuffer(ref meshInfoBuffer, allMeshes);
 
 		// numMeshChunks = allBVHInfo.Count;
-		ShaderHelper.CreateStructuredBuffer(ref triangleBuffer, allTriangles);
-		ShaderHelper.CreateStructuredBuffer(ref bvhNodeBuffer, allBVHInfo);
-		ShaderHelper.CreateStructuredBuffer(ref meshInfoBuffer, allMeshes);
-		rayTracingMaterial.SetBuffer("Triangles", triangleBuffer);
-		rayTracingMaterial.SetInt("NumTriangles", allTriangles.Count);
-
-		rayTracingMaterial.SetBuffer("BVHNodes", bvhNodeBuffer);
-		rayTracingMaterial.SetInt("NumBVHNodes", allBVHInfo.Count);
-
 		rayTracingMaterial.SetBuffer("Meshes", meshInfoBuffer);
 		rayTracingMaterial.SetInt("NumMeshes", allMeshes.Count);
 

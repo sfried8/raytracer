@@ -325,12 +325,10 @@ public class RayTracerHelper : MonoBehaviour
 	{
 		if (!meshToBVHNodeIndex.ContainsKey((mesh, subMeshIndex)))
 		{
-			Debug.Log($"Don't have bvh node, creating");
 			int newMeshBVHIndex = CreateBVHForMesh(mesh, subMeshIndex);
 			meshToBVHNodeIndex[(mesh, subMeshIndex)] = newMeshBVHIndex;
 			return newMeshBVHIndex;
 		}
-		Debug.Log($"Reusing bvh node!");
 		return meshToBVHNodeIndex[(mesh, subMeshIndex)];
 	}
 	public void CreateMeshes()

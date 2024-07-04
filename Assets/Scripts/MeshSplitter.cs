@@ -50,6 +50,28 @@ public static class MeshSplitter
 {
 
     public static int numSplitsToTest = 5;
+    private static float EvaluateSplitLite(MeshChunk startingMesh, int axis, float percentage)
+    {
+        float boundsCenterAxis = startingMesh.bounds.min[axis] + percentage * startingMesh.bounds.size[axis];
+        int numTrianglesA = 0;
+        RTBounds boundsA = new();
+        RTBounds boundsB = new();
+        foreach (Triangle triangle in startingMesh.triangles)
+        {
+            float triangleCenterAxis = triangle.center[axis];
+            if (triangleCenterAxis < boundsCenterAxis)
+            {
+                numTrianglesA++;
+                boundsA.Encapsulate(triangle.min, triangle.max);
+            }
+            else
+            {
+                boundsB.Encapsulate(triangle.min, triangle.max);
+            }
+        }
+        return Cost(boundsA, numTrianglesA) + Cost(boundsB, startingMesh.triangles.Count - numTrianglesA);
+
+    }
     private static (MeshChunk meshChunkA, MeshChunk meshChunkB) SplitOnce(MeshChunk startingMesh, int axis, float percentage)
     {
         float boundsCenterAxis = startingMesh.bounds.min[axis] + percentage * startingMesh.bounds.size[axis];
@@ -122,42 +144,37 @@ public static class MeshSplitter
 
     private static float Cost(MeshChunk meshChunk)
     {
-        float halfSurfaceArea = meshChunk.bounds.size.x * meshChunk.bounds.size.y +
-                                meshChunk.bounds.size.y * meshChunk.bounds.size.z +
-                                meshChunk.bounds.size.z * meshChunk.bounds.size.x;
-        return halfSurfaceArea * meshChunk.triangles.Count;
+        return Cost(meshChunk.bounds, meshChunk.triangles.Count);
     }
-    private static float Cost(List<MeshChunk> meshChunks)
+    private static float Cost(RTBounds bounds, int numTriangles)
     {
-        float sum = 0f;
-        foreach (MeshChunk chunk in meshChunks)
-        {
-            sum += Cost(chunk);
-        }
-        return sum;
+        float halfSurfaceArea = bounds.size.x * bounds.size.y +
+                                bounds.size.y * bounds.size.z +
+                                bounds.size.z * bounds.size.x;
+        return halfSurfaceArea * numTriangles;
     }
 
     public static (MeshChunk meshChunkA, MeshChunk meshChunkB, float cost) FindBestSplit(MeshChunk fullMesh)
     {
-        MeshChunk bestSplitA = new();
-        MeshChunk bestSplitB = new();
         float bestCost = 1e30f;
+        int bestAxis = 0;
+        float bestPercentage = 0;
         for (int i = 0; i < 3; i++)
         {
             for (int j = 0; j < numSplitsToTest; j++)
             {
-
-                (var splitA, var splitB) = SplitOnce(fullMesh, i, 1.0f / (numSplitsToTest + 1) * (j + 1));
-                var splitCost = Cost(splitA) + Cost(splitB);
+                var perc = 1.0f / (numSplitsToTest + 1) * (j + 1);
+                var splitCost = EvaluateSplitLite(fullMesh, i, perc);
                 if (splitCost < bestCost)
                 {
                     bestCost = splitCost;
-                    bestSplitA = splitA;
-                    bestSplitB = splitB;
+                    bestAxis = i;
+                    bestPercentage = perc;
                 }
             }
         }
-        return (bestSplitA, bestSplitB, bestCost);
+        (var bestChunkA, var bestChunkB) = SplitOnce(fullMesh, bestAxis, bestPercentage);
+        return (bestChunkA, bestChunkB, bestCost);
 
         // int axis = 0;
         // float largestSide = 0;
